@@ -31,7 +31,7 @@
     - Create a `.env` file in the `server` directory.
     - Add the following line to the `.env` file, replacing with MongoDB Atlas credentials:
     ```bash
-    MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/<database_name>?retryWrites=true&w=majority
+    DB_URL=mongodb+srv://cmpe133_team5:*<password>*@freecluster.5t8hw.mongodb.net/?retryWrites=true&w=majority&appName=FreeCluster
     ```
 3. Now, **run the backend server**, use the following command:
     ```bash
