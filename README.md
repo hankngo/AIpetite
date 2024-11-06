@@ -28,7 +28,11 @@
     cd AIpetite/server
     ```
 2. **Setup MongoDB connection**:
-    - Create a `.env` file in the `server` directory.
+    - Create a `.env` file in the `backend` directory.
+    ```bash
+    cd backend
+    touch .env
+    ```
     - Add the following line to the `.env` file, replacing with MongoDB Atlas credentials:
     ```bash
     DB_URL=mongodb+srv://cmpe133_team5:<password>@freecluster.5t8hw.mongodb.net/?retryWrites=true&w=majority&appName=FreeCluster
