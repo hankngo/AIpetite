@@ -1,22 +1,18 @@
 const express = require("express");
 const app = express();
-app.use(express.json());
 const mongoose = require("mongoose");
+const {UserInfo, UserPreferences, UserVisitedHistory} = require("./db/userModels");
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const dotenv = require('dotenv');
+app.use(express.json());
 dotenv.config();
 
 const fetchNearbyRestaurants = require('./searchRestaurants');
 
-// require database connection
 const dbConnect = require("./db/dbConnect");
 dbConnect();
-
-// require database schema
-const User = require("./db/userModel");
-const UserPreferences = require("./db/userPrefencesModel");
 
 app.listen(5001, () => {
     console.log("NodeJS Server for AIpetite started on port 5001!");
@@ -29,12 +25,12 @@ app.get("/", (req, res) => {
 app.post("/register", async(req, res) => {
     const {email, password} = req.body;
     try {
-        const oldUser = await User.findOne({email: email});
+        const oldUser = await UserInfo.findOne({email: email});
         if (oldUser) {
             return res.status(400).send("User already exists");
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser= await User.create({
+        const newUser= await UserInfo.create({
             email: email,
             password: hashedPassword,
         });
@@ -48,7 +44,7 @@ app.post("/register", async(req, res) => {
 app.post("/login", async(req, res) => {
     const {email, password} = req.body;
     try {
-        const oldUser = await User.findOne({email: email});
+        const oldUser = await UserInfo.findOne({email: email});
         if (!oldUser) {
             return res.status(400).send("User does not exist");
         }
@@ -72,30 +68,67 @@ app.post("/login", async(req, res) => {
     }
 });
 
-app.get("/dining-preferences/:userID", async(req, res) => {
-	const {userID} = req.params;
+app.get("/visited-places/:user_id", async(req, res) => {
+	const {user_id} = req.params;
 	try {
-		if (!mongoose.Types.ObjectId.isValid(userID)) return res.status(400).send("Invalid user ID type.");
-		if (!await User.findById(userID)) return res.status(404).send("User not found.");
+		if (!mongoose.Types.ObjectId.isValid(user_id)) return res.status(400).send("Invalid user ID type.");
+		if (!await UserInfo.findById(user_id)) return res.status(404).send("User not found.");
 
-		const preferences = await UserPreferences.findOne({ userId: new mongoose.Types.ObjectId(userID) });
-		if (!preferences) return res.status(404).send(`Dining preferences not found for user: ${userID}.`);
+		const visitedPlaces = await UserVisitedHistory.findOne({user_id: new mongoose.Types.ObjectId(user_id)});
+		if (!visitedPlaces) return res.status(404).send(`Visited places not found for user ID: ${user_id}.`);
+		res.status(200).json(visitedPlaces);
+	} catch (error) {
+		res.status(500).send("Error retrieving visited places: " + error.message);
+	}
+});
+
+app.post("/visited-places/:user_id", async(req, res) => {
+	const {user_id} = req.params;
+	const {restaurants} = req.body;
+	try {
+		if (!mongoose.Types.ObjectId.isValid(user_id)) return res.status(400).send("Invalid user ID type.");
+		if (!await UserInfo.findById(user_id)) return res.status(404).send("User not found.");
+		if (!restaurants || !restaurants.length) res.status(500).send(`No restaurants found for user ID: ${user_id} due to server issue.`);
+
+		const visitedPlaces = await UserVisitedHistory.findOne({user_id: new mongoose.Types.ObjectId(user_id)});
+		if (!visitedPlaces) {
+			const newVisitedPlaces = await UserVisitedHistory.create({user_id: user_id, restaurants});
+			await newVisitedPlaces.save();
+			return res.status(201).send("Visited places created successfully.");
+		} else {
+			visitedPlaces.restaurants = restaurants;
+			await visitedPlaces.save();
+			res.status(200).send("Visited places updated successfully.");
+		}
+	} catch (error) {
+		res.status(500).send("Error handling visited places: " + error.message);
+	}
+});
+
+app.get("/dining-preferences/:user_id", async(req, res) => {
+	const {user_id} = req.params;
+	try {
+		if (!mongoose.Types.ObjectId.isValid(user_id)) return res.status(400).send("Invalid user ID type.");
+		if (!await UserInfo.findById(user_id)) return res.status(404).send("User not found.");
+
+		const preferences = await UserPreferences.findOne({user_id: new mongoose.Types.ObjectId(user_id)});
+		if (!preferences) return res.status(404).send(`Dining preferences not found for user ID: ${user_id}.`);
     	res.status(200).json(preferences);
 	} catch (error) {
 		res.status(500).send("Error retrieving dining preferences: " + error.message);
 	}
 });
 
-app.post("/dining-preferences/:userID", async(req, res) => {
-	const {userID} = req.params;
+app.post("/dining-preferences/:user_id", async(req, res) => {
+	const {user_id} = req.params;
 	const {cuisine, dietaryRestrictions, priceRange, location} = req.body;
 	try {
-		if (!mongoose.Types.ObjectId.isValid(userID)) return res.status(400).send("Invalid user ID type.");
-		if (!await User.findById(userID)) return res.status(404).send("User not found.");
+		if (!mongoose.Types.ObjectId.isValid(user_id)) return res.status(400).send("Invalid user ID type.");
+		if (!await UserInfo.findById(user_id)) return res.status(404).send("User not found.");
 
-		const preferences = await UserPreferences.findOne({ userId: new mongoose.Types.ObjectId(userID) });
+		const preferences = await UserPreferences.findOne({user_id: new mongoose.Types.ObjectId(user_id)});
 		if (!preferences) {
-			const newPreferences = await UserPreferences.create({userId: userID, cuisine, dietaryRestrictions, priceRange, location});
+			const newPreferences = await UserPreferences.create({user_id: user_id, cuisine, dietaryRestrictions, priceRange, location});
 			await newPreferences.save();
 			return res.status(201).send("Dining preferences created successfully.");
 		} else {
@@ -125,7 +158,7 @@ app.post("/nearby-restaurants", async (req, res) => {
     }
 });
 
-app.post("/random-restaurant", async (req, res) => {
+app.post("/random-restaurants", async (req, res) => {
     const { latitude, longitude } = req.body;
 
     try {
