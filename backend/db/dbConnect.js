@@ -1,6 +1,6 @@
 // external imports
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
 
 // Load environment variables from AIpetite/backend/.env'
 dotenv.config();
