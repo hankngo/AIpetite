@@ -104,3 +104,18 @@ app.post("/random-restaurant", async (req, res) => {
         res.status(500).send("Error generating random restaurant recommendation: " + error.message);
     }
 });
+
+app.post("/suggest-restaurants", async (req, res) => {
+    const { latitude, longitude, foodType } = req.body;
+    const apiKey = process.env.GOOGLE_API_KEY;
+
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=1500&type=restaurant&keyword=${foodType}&key=${apiKey}`;
+
+    try {
+        const response = await axios.get(url);
+        const restaurants = response.data.results;
+        res.status(200).send(restaurants);
+    } catch (error) {
+        res.status(500).send("Error suggesting restaurants: " + error.message);
+    }
+});
