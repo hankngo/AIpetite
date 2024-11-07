@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 app.use(express.json());
+const mongoose = require("mongoose");
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
@@ -15,6 +16,7 @@ dbConnect();
 
 // require database schema
 const User = require("./db/userModel");
+const UserPreferences = require("./db/userPrefencesModel");
 
 app.listen(5001, () => {
     console.log("NodeJS Server for AIpetite started on port 5001!");
@@ -69,6 +71,48 @@ app.post("/login", async(req, res) => {
         return res.status(500).send("Error logging in: " + error.message);
     }
 });
+
+app.get("/dining-preferences/:userID", async(req, res) => {
+	const {userID} = req.params;
+	try {
+		if (!mongoose.Types.ObjectId.isValid(userID)) return res.status(400).send("Invalid user ID type.");
+		if (!await User.findById(userID)) return res.status(404).send("User not found.");
+
+		const preferences = await UserPreferences.findOne({ userId: new mongoose.Types.ObjectId(userID) });
+		if (!preferences) return res.status(404).send(`Dining preferences not found for user: ${userID}.`);
+    	res.status(200).json(preferences);
+	} catch (error) {
+		res.status(500).send("Error retrieving dining preferences: " + error.message);
+	}
+});
+
+app.post("/dining-preferences/:userID", async(req, res) => {
+	const {userID} = req.params;
+	const {cuisine, dietaryRestrictions, priceRange, location} = req.body;
+	try {
+		if (!mongoose.Types.ObjectId.isValid(userID)) return res.status(400).send("Invalid user ID type.");
+		if (!await User.findById(userID)) return res.status(404).send("User not found.");
+
+		const preferences = await UserPreferences.findOne({ userId: new mongoose.Types.ObjectId(userID) });
+		if (!preferences) {
+			const newPreferences = await UserPreferences.create({userId: userID, cuisine, dietaryRestrictions, priceRange, location});
+			await newPreferences.save();
+			return res.status(201).send("Dining preferences created successfully.");
+		} else {
+			preferences.cuisine = cuisine;
+			preferences.dietaryRestrictions = dietaryRestrictions;
+			preferences.priceRange = priceRange;
+			preferences.location = location;
+			await preferences.save();
+			res.status(200).send("Dining preferences updated successfully.");
+		}
+	} catch (error) {
+		res.status(500).send("Error handling dining preferences: " + error.message);
+	}
+});
+
+// Suggestion: delete user dining-preferences request in DB if have app has user deactivate feature
+
 
 app.post("/nearby-restaurants", async (req, res) => {
     const { latitude, longitude } = req.body;

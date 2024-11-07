@@ -25,12 +25,11 @@
 
     Change into the `backend` directory where the backend code is located:
     ```bash
-    cd AIpetite/server
+    cd AIpetite/backend
     ```
 2. **Setup services connection**:
     - Create a `.env` file in the `backend` directory.
     ```bash
-    cd backend
     touch .env
     ```
     - Add the following line to the `.env` file, replacing with MongoDB Atlas credentials and Google Places API:
