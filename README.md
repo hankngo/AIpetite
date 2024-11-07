@@ -62,7 +62,7 @@
 ## Making Changes
 - **IMPORTANT** Please don't directly push to the main ever
 - For any **new feature** you’re working on, you should **create a new branch** and **make changes on your own branch**.
-- Branches should be named {frontend/backend/...}/{your_name}/{feature_name}.
+- Branches should be named {your_name}/{frontend/backend/...}/{feature_name}.
     - For example:  `anthony/frontend/authenticationUI`
 
 - If possible, organize your work by keeping backend and frontend changes in separate branches.
