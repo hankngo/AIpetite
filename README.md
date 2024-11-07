@@ -8,7 +8,7 @@
 ## Getting Started
 
 1. **Clone the Repository:**
-    In your teminal,
+    In your terminal,
    ```bash
    git clone <repository-url>
    cd AIpetite
@@ -27,15 +27,16 @@
     ```bash
     cd AIpetite/server
     ```
-2. **Setup MongoDB connection**:
+2. **Setup services connection**:
     - Create a `.env` file in the `backend` directory.
     ```bash
     cd backend
     touch .env
     ```
-    - Add the following line to the `.env` file, replacing with MongoDB Atlas credentials:
+    - Add the following line to the `.env` file, replacing with MongoDB Atlas credentials and Google Places API:
     ```bash
     DB_URL=mongodb+srv://cmpe133_team5:<password>@freecluster.5t8hw.mongodb.net/?retryWrites=true&w=majority&appName=FreeCluster
+    GOOGLE_API_KEY=<key_value>
     ```
 3. Now, **run the backend server**, use the following command:
     ```bash
@@ -59,11 +60,11 @@
     The project should now be running with the backend on port 5001 and the frontend on its designated port (usually 3000).
 
 ## Making Changes
-- **IMPORTANT** Please don't directly push to main ever
-- For any **new feature** you’re working on, you should **create a new branch** and **making changes on your own branch**.
+- **IMPORTANT** Please don't directly push to the main ever
+- For any **new feature** you’re working on, you should **create a new branch** and **make changes on your own branch**.
 - Branches should be named {frontend/backend/...}/{your_name}/{feature_name}.
-    - For example:  `frontend/anthony/authenticationUI`
+    - For example:  `anthony/frontend/authenticationUI`
 
-- If possible, organizing your work by keeping backend and frontend changes in separate branches.
+- If possible, organize your work by keeping backend and frontend changes in separate branches.
 
 - When ready to merge, or if you encounter merge conflicts and need assistance, consult the team.
