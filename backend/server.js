@@ -101,12 +101,97 @@ app.post("/random-restaurant", async (req, res) => {
 });
 
 app.post("/suggest-restaurants", async (req, res) => {
-    const { latitude, longitude, foodType, minPrice, maxPrice, openNow } = req.body;
+    const { latitude, longitude, usersPreferences } = req.body;
 
     try {
-        const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice, openNow);
+        // Aggregate preferences
+        let foodTypes = [];
+        let minPrice = Infinity;
+        let maxPrice = -Infinity;
+
+        usersPreferences.forEach(pref => {
+            if (pref.foodType) {
+                foodTypes.push(pref.foodType);
+            }
+            if (pref.minPrice !== undefined) {
+                minPrice = Math.min(minPrice, pref.minPrice);
+            }
+            if (pref.maxPrice !== undefined) {
+                maxPrice = Math.max(maxPrice, pref.maxPrice);
+            }
+        });
+
+        // Join food types with OR logic for keyword search
+        const foodType = foodTypes.join('|');
+
+        const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice);
+		if (restaurants.length === 0) {
+            return res.status(404).send("No nearby restaurants found");
+        }
+
         res.status(200).send(restaurants);
     } catch (error) {
         res.status(500).send("Error suggesting restaurants: " + error.message);
+    }
+});
+
+const calculateMode = (array) => {
+    const frequency = {};
+    let maxFreq = 0;
+    let mode;
+
+    array.forEach(item => {
+        frequency[item] = (frequency[item] || 0) + 1;
+        if (frequency[item] > maxFreq) {
+            maxFreq = frequency[item];
+            mode = item;
+        }
+    });
+
+    return mode;
+};
+
+app.post("/group-restaurant", async (req, res) => {
+    const { latitude, longitude, usersPreferences } = req.body;
+
+    if (!Array.isArray(usersPreferences)) {
+        return res.status(400).send("Invalid input: usersPreferences should be an array");
+    }
+
+    try {
+        // Aggregate preferences
+        let foodTypes = [];
+        let minPrices = [];
+        let maxPrices = [];
+
+        usersPreferences.forEach(pref => {
+            if (pref.foodType) {
+                foodTypes.push(pref.foodType);
+            }
+            if (pref.minPrice !== undefined) {
+                minPrices.push(pref.minPrice);
+            }
+            if (pref.maxPrice !== undefined) {
+                maxPrices.push(pref.maxPrice);
+            }
+        });
+
+        // Calculate mode for each field
+        const foodType = calculateMode(foodTypes);
+        const minPrice = calculateMode(minPrices);
+        const maxPrice = calculateMode(maxPrices);
+
+        const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice);
+
+        if (restaurants.length === 0) {
+            return res.status(404).send("No nearby restaurants found");
+        }
+
+        // Select the best restaurant (assuming the first restaurant is the best match)
+        const selectedRestaurant = restaurants[0];
+
+        res.status(200).send(selectedRestaurant);
+    } catch (error) {
+        res.status(500).send("Error selecting group restaurant: " + error.message);
     }
 });
