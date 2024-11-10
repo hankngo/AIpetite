@@ -178,31 +178,44 @@ app.post("/random-restaurants", async (req, res) => {
 });
 
 app.post("/suggest-restaurants", async (req, res) => {
-    const { latitude, longitude, usersPreferences } = req.body;
+    const { latitude, longitude, userIds } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).send("Invalid input: userIds should be a non-empty array");
+    }
 
     try {
+        const userPreferences = await UserPreferences.find({ user_id: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) } });
+
+        if (userPreferences.length === 0) {
+            return res.status(404).send("No dining preferences found for the provided user IDs");
+        }
+
         // Aggregate preferences
         let foodTypes = [];
-        let minPrice = Infinity;
-        let maxPrice = -Infinity;
+        let minPrices = [];
+        let maxPrices = [];
 
-        usersPreferences.forEach(pref => {
-            if (pref.foodType) {
-                foodTypes.push(pref.foodType);
+        userPreferences.forEach(pref => {
+            if (pref.cuisine) {
+                foodTypes.push(...pref.cuisine);
             }
-            if (pref.minPrice !== undefined) {
-                minPrice = Math.min(minPrice, pref.minPrice);
+            if (pref.priceRange && pref.priceRange.min !== undefined) {
+                minPrices.push(pref.priceRange.min);
             }
-            if (pref.maxPrice !== undefined) {
-                maxPrice = Math.max(maxPrice, pref.maxPrice);
+            if (pref.priceRange && pref.priceRange.max !== undefined) {
+                maxPrices.push(pref.priceRange.max);
             }
         });
 
-        // Join food types with OR logic for keyword search
-        const foodType = foodTypes.join('|');
+        // Calculate mode for each field
+        const foodType = calculateMode(foodTypes);
+        const minPrice = calculateMode(minPrices);
+        const maxPrice = calculateMode(maxPrices);
 
         const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice);
-		if (restaurants.length === 0) {
+
+        if (restaurants.length === 0) {
             return res.status(404).send("No nearby restaurants found");
         }
 
@@ -229,27 +242,33 @@ const calculateMode = (array) => {
 };
 
 app.post("/group-restaurant", async (req, res) => {
-    const { latitude, longitude, usersPreferences } = req.body;
+    const { latitude, longitude, userIds } = req.body;
 
-    if (!Array.isArray(usersPreferences)) {
-        return res.status(400).send("Invalid input: usersPreferences should be an array");
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).send("Invalid input: userIds should be a non-empty array");
     }
 
     try {
+        const userPreferences = await UserPreferences.find({ user_id: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) } });
+
+        if (userPreferences.length === 0) {
+            return res.status(404).send("No dining preferences found for the provided user IDs");
+        }
+
         // Aggregate preferences
         let foodTypes = [];
         let minPrices = [];
         let maxPrices = [];
 
-        usersPreferences.forEach(pref => {
-            if (pref.foodType) {
-                foodTypes.push(pref.foodType);
+        userPreferences.forEach(pref => {
+            if (pref.cuisine) {
+                foodTypes.push(...pref.cuisine);
             }
-            if (pref.minPrice !== undefined) {
-                minPrices.push(pref.minPrice);
+            if (pref.priceRange && pref.priceRange.min !== undefined) {
+                minPrices.push(pref.priceRange.min);
             }
-            if (pref.maxPrice !== undefined) {
-                maxPrices.push(pref.maxPrice);
+            if (pref.priceRange && pref.priceRange.max !== undefined) {
+                maxPrices.push(pref.priceRange.max);
             }
         });
 
