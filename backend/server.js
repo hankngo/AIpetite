@@ -291,3 +291,41 @@ app.post("/group-restaurant", async (req, res) => {
         res.status(500).send("Error selecting group restaurant: " + error.message);
     }
 });
+
+app.post("/review-restaurant", async (req, res) => {
+    const { userId, restaurantId, rating, comment } = req.body;
+
+    try {
+        // Check for required fields
+        if (!userId || !restaurantId || !rating) {
+            return res.status(400).send("User ID, Restaurant ID, and rating are required.");
+        }
+
+        // Check if restaurant exists
+        const restaurant = await Restaurant.findById(restaurantId);
+        if (!restaurant) {
+            return res.status(404).send("Restaurant not found.");
+        }
+
+        // Create and save the review
+        const newReview = new Review({
+            userId,
+            restaurantId,
+            rating,
+            comment,
+            date: new Date()
+        });
+        await newReview.save();
+
+        // Optionally update the restaurant's average rating
+        const reviews = await Review.find({ restaurantId });
+        const averageRating = reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
+        restaurant.averageRating = averageRating;
+        await restaurant.save();
+
+        res.status(201).send({ message: "Review added successfully!" });
+    } catch (error) {
+        console.error("Error adding review:", error);
+        res.status(500).send("An error occurred while adding the review.");
+    }
+});
