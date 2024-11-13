@@ -318,11 +318,15 @@ app.get("/review-restaurant", async (req, res) => {
     }
 });
 
-app.post("/review-restaurant", async (req, res) => {
-    const {userId, restaurantId, rating, comment} = req.body;
+app.post("/review-restaurant/:user_id", async (req, res) => {
+    const {user_id} = req.params;
+    const {restaurantId, rating, comment} = req.body;
 
     try {
-        if (!userId || !restaurantId || !rating) {
+        if (!mongoose.Types.ObjectId.isValid(user_id)) return res.status(400).send("Invalid user ID type.");
+        if (!await UserInfo.findById(user_id)) return res.status(404).send("User not found.");
+
+        if (!user_id || !restaurantId || !rating) {
             return res.status(400).send("User ID, restaurant ID, and rating are required.");
         }
 
@@ -331,7 +335,7 @@ app.post("/review-restaurant", async (req, res) => {
         }
 
         const newReview = new Review({
-            userId,
+            user_id,
             restaurantId,
             rating,
             comment
