@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const {UserInfo, UserPreferences, UserVisitedHistory} = require("./db/userModels");
+const {UserInfo, UserPreferences, UserVisitedHistory, Review} = require("./db/userModels");
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
@@ -292,6 +292,30 @@ app.post("/group-restaurant", async (req, res) => {
     }
 });
 
+// GET method to fetch restaurant reviews by restaurantId
+app.get("/review-restaurant", async (req, res) => {
+    const { restaurantId } = req.query; // Get restaurantId from query parameters
+
+    try {
+        // Check if restaurantId is provided
+        if (!restaurantId) {
+            return res.status(400).send("Restaurant ID is required.");
+        }
+
+        // Fetch reviews for the specified restaurant and populate user information
+        const reviews = await Review.find({ "restaurants.restaurants_id": restaurantId })
+            .populate("userId", "name") // Adjust field as necessary (e.g., "name" or other user fields)
+            .sort({ date: -1 }); // Sort reviews by date, newest first
+
+        // Return the reviews in the response
+        res.status(200).send(reviews);
+    } catch (error) {
+        console.error("Error fetching reviews:", error);
+        res.status(500).send("An error occurred while fetching reviews.");
+    }
+});
+
+// POST method to add a new review for a restaurant
 app.post("/review-restaurant", async (req, res) => {
     const { userId, restaurantId, rating, comment } = req.body;
 
@@ -302,7 +326,7 @@ app.post("/review-restaurant", async (req, res) => {
         }
 
         // Check if restaurant exists
-        const restaurant = await Restaurant.findById(restaurantId);
+        const restaurant = await restaurant.findById(restaurantId);
         if (!restaurant) {
             return res.status(404).send("Restaurant not found.");
         }
