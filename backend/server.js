@@ -292,64 +292,56 @@ app.post("/group-restaurant", async (req, res) => {
     }
 });
 
-// GET method to fetch restaurant reviews by restaurantId
 app.get("/review-restaurant", async (req, res) => {
-    const { restaurantId } = req.query; // Get restaurantId from query parameters
+    const {restaurantId} = req.query; // Get restaurantId from query parameters
 
     try {
-        // Check if restaurantId is provided
+        // Validate if restaurantId is provided
         if (!restaurantId) {
-            return res.status(400).send("Restaurant ID is required.");
+            return res.status(400).json({ error: "Restaurant ID is required." });
         }
 
-        // Fetch reviews for the specified restaurant and populate user information
-        const reviews = await Review.find({ "restaurants.restaurants_id": restaurantId })
-            .populate("userId", "name") // Adjust field as necessary (e.g., "name" or other user fields)
-            .sort({ date: -1 }); // Sort reviews by date, newest first
+        // Fetch reviews with matching restaurantId in the 'restaurants' array
+        const reviews = await Review.find({ "restaurants.restaurant_id": restaurantId })
+            .populate("userId", "name") // Populate user information if needed
+            .sort({ date: -1 }); // Sort by date, newest first
 
-        // Return the reviews in the response
-        res.status(200).send(reviews);
+        // Return the reviews if found
+        if (reviews.length === 0) {
+            return res.status(404).json({ message: "No reviews found for this restaurant." });
+        }
+
+        res.status(200).json(reviews);
     } catch (error) {
         console.error("Error fetching reviews:", error);
-        res.status(500).send("An error occurred while fetching reviews.");
+        res.status(500).json({ error: "An error occurred while fetching reviews." });
     }
 });
 
-// POST method to add a new review for a restaurant
 app.post("/review-restaurant", async (req, res) => {
-    const { userId, restaurantId, rating, comment } = req.body;
+    const {userId, restaurantId, rating, comment} = req.body;
 
     try {
-        // Check for required fields
         if (!userId || !restaurantId || !rating) {
-            return res.status(400).send("User ID, Restaurant ID, and rating are required.");
+            return res.status(400).send("User ID, restaurant ID, and rating are required.");
         }
 
-        // Check if restaurant exists
-        const restaurant = await restaurant.findById(restaurantId);
-        if (!restaurant) {
-            return res.status(404).send("Restaurant not found.");
+        if (rating < 1 || rating > 5) {
+            return res.status(400).send("Rating must be between 1 and 5.");
         }
 
-        // Create and save the review
         const newReview = new Review({
             userId,
             restaurantId,
             rating,
-            comment,
-            date: new Date()
+            comment
         });
+
         await newReview.save();
 
-        // Optionally update the restaurant's average rating
-        const reviews = await Review.find({ restaurantId });
-        const averageRating = reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
-        restaurant.averageRating = averageRating;
-        await restaurant.save();
-
-        res.status(201).send({ message: "Review added successfully!" });
+        res.status(201).json({ message: "Review added successfully!", review: newReview });
     } catch (error) {
         console.error("Error adding review:", error);
-        res.status(500).send("An error occurred while adding the review.");
+        res.status(500).send("An error occurred while adding the review: " + error.message);
     }
 });
