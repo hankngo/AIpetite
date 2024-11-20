@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const {UserInfo, UserPreferences, UserVisitedHistory, Review} = require("./db/userModels");
+const {UserInfo, UserPreferences, UserVisitedHistory, RestaurantInfo, ReviewInfo} = require("./db/userModels");
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
@@ -292,60 +292,41 @@ app.post("/group-restaurant", async (req, res) => {
     }
 });
 
-app.get("/review-restaurant", async (req, res) => {
-    const {restaurantId} = req.query; // Get restaurantId from query parameters
+app.get("/fetch-reviews/:restaurant_id", async (req, res) => {
+    const{ restaurant_id } = req.params;
 
     try {
-        // Validate if restaurantId is provided
-        if (!restaurantId) {
-            return res.status(400).json({ error: "Restaurant ID is required." });
-        }
+        if (!mongoose.Types.ObjectId.isValid(restaurant_id)) return res.status(400).send("Invalid restaurant ID type.");
+        if (!await RestaurantInfo.findById(restaurant_id)) return res.status(404).send("Restaurant not found.");
 
-        // Fetch reviews with matching restaurantId in the 'restaurants' array
-        const reviews = await Review.find({ "restaurants.restaurant_id": restaurantId })
-            .populate("userId", "name") // Populate user information if needed
-            .sort({ date: -1 }); // Sort by date, newest first
-
-        // Return the reviews if found
-        if (reviews.length === 0) {
-            return res.status(404).json({ message: "No reviews found for this restaurant." });
-        }
+        const reviews = await ReviewInfo.findOne({restaurant_id: new mongoose.Types.ObjectId(restaurant_id)})
+        if (!reviews) return res.status(404).send(`Reviews not found for restaurant ID: ${restaurant_id}.`);
 
         res.status(200).json(reviews);
     } catch (error) {
-        console.error("Error fetching reviews:", error);
-        res.status(500).json({ error: "An error occurred while fetching reviews." });
+        res.status(500).send("Error retrieving reviews: " + error.message);
     }
 });
 
-app.post("/review-restaurant/:user_id", async (req, res) => {
-    const {user_id} = req.params;
-    const {restaurantId, rating, comment} = req.body;
+app.post("/review-restaurant", async (req, res) => {
+    const {restaurant_id, rating, comment} = req.body;
+
+    if (!restaurant_id || !rating || !comment) {
+        return res.status(400).send("Restaurant, rating, and comment are required.");
+    }
 
     try {
-        if (!mongoose.Types.ObjectId.isValid(user_id)) return res.status(400).send("Invalid user ID type.");
-        if (!await UserInfo.findById(user_id)) return res.status(404).send("User not found.");
-
-        if (!user_id || !restaurantId || !rating) {
-            return res.status(400).send("User ID, restaurant ID, and rating are required.");
-        }
-
-        if (rating < 1 || rating > 5) {
-            return res.status(400).send("Rating must be between 1 and 5.");
-        }
-
         const newReview = new Review({
-            user_id,
-            restaurantId,
+            restaurant_id,
             rating,
-            comment
+            comment,
+            createdAt: new Date()
         });
-
         await newReview.save();
-
-        res.status(201).json({ message: "Review added successfully!", review: newReview });
+        
+        return res.status(201).json({ message: "Review submitted successfully!", review: newReview });
     } catch (error) {
-        console.error("Error adding review:", error);
-        res.status(500).send("An error occurred while adding the review: " + error.message);
+        console.error("Error submitting the review: ", error);
+        res.status(500).send("Failed to submit review.");
     }
 });
