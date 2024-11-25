@@ -23,7 +23,7 @@ const RegisterScreen = ({ navigation }) => {
     }
     try {
       const userData = {email, password};
-      const result = await axios.post("http://<ip>:5001/register", userData); // TODO: will update the URL later
+      const result = await axios.post("http://localhost:5001/register", userData); 
       console.log(result);
       alert('Registration successful!');
       navigation.replace('Home');

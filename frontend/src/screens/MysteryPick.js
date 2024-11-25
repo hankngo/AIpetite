@@ -1,85 +1,68 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Image } from 'react-native';
 
 const MysteryPick = ({ navigation }) => {
-
-  const [rotation, setRotation] = useState(new Animated.Value(0));
+  const [position, setPosition] = useState(new Animated.Value(0)); 
   const [buttonDisabled, setButtonDisabled] = useState(false);
+  const [selectedSegment, setSelectedSegment] = useState(null);
+
+  const segments = [
+    { color: '#FFB84D', label: 'McDonalds' }, 
+    { color: '#FF8000', label: 'Taco Bell' },  
+    { color: '#FF9933', label: 'La Vics' }, 
+    { color: '#FFCC00', label: 'Chipotle' },   
+    { color: '#FFD700', label: 'Panda Express' },
+    { color: '#FFB300', label: 'In N Out' },   
+  ];
 
   const handleSpin = () => {
     setButtonDisabled(true);
 
-    const minRotations = 5 * 360; // 5 full rotations (5 * 360 degrees)
-    const additionalRotation = Math.floor(Math.random() * 360); // Random additional rotation (0 - 360 degrees)
+    const totalSegments = segments.length;
+    const randomSegmentIndex = Math.floor(Math.random() * totalSegments);
+    const segmentHeight = 150; 
+    const totalSpinDistance = segmentHeight * totalSegments * 10; 
 
-    const totalRotation = minRotations + additionalRotation;
-
-    Animated.timing(rotation, {
-      toValue: totalRotation + 3600, // Ensure a minimum of 5 rotations + the random extra rotations
-      duration: 3000, // 3 seconds for the animation
+    const finalOffset = randomSegmentIndex * segmentHeight;
+    Animated.timing(position, {
+      toValue: -totalSpinDistance - finalOffset, 
+      duration: 5000, 
       useNativeDriver: true,
-    }).start();
+    }).start(() => {
+      
+      setPosition(new Animated.Value(-finalOffset)); 
+      setSelectedSegment(segments[randomSegmentIndex].label);
+      setButtonDisabled(false); 
+    });
   };
-
-  const wheelRotation = rotation.interpolate({
-    inputRange: [0, 360],
-    outputRange: ['0deg', '360deg'],
-  });
 
   return (
     <View style={styles.container}>
-      <View style={styles.topSection}>
-        <Text style={styles.welcomeText}>We'll Pick For You!</Text>
+      <Text style={styles.title}>Can't Choose?</Text>
+
+      <View style={styles.drumContainer}>
+        <Animated.View style={[styles.drum, { transform: [{ translateY: position }] }]}>
+          {Array(segments.length * 3) 
+            .fill(segments)
+            .flat()
+            .map((segment, index) => (
+              <View key={index} style={[styles.segment, { backgroundColor: segment.color }]}>
+                <Text style={styles.segmentLabel}>{segment.label}</Text>
+              </View>
+            ))}
+        </Animated.View>
       </View>
+      
+      <Image source={require('../../assets/images/knob.png')} style={styles.knob} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.wheelContainer}>
-          <Animated.Image
-            source={require('../../assets/images/wheel.png')}
-            style={[styles.wheel, { transform: [{ rotate: wheelRotation }] }]}
-          />
-          <Image source={require('../../assets/images/knob.png')} style={styles.knob} />
-        </View>
+      <TouchableOpacity
+        style={[styles.spinButton, { backgroundColor: buttonDisabled ? '#ccc' : '#ffaa00' }]}
+        onPress={handleSpin}
+        disabled={buttonDisabled}
+      >
+        <Text style={styles.spinButtonText}>Spin Me!</Text>
+      </TouchableOpacity>
 
-        {/* Spin Button */}
-        <TouchableOpacity
-          style={[styles.spinButton, { backgroundColor: buttonDisabled ? '#ccc' : '#ffaa00' }]}  // Change button color when disabled
-          onPress={handleSpin}
-          disabled={buttonDisabled}  // Disable the button if it's been pressed
-        >
-          <Text style={styles.spinButtonText}>Spin the Wheel</Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.subtleText}>Your Recommended Places:</Text>
-
-        {/* Key legend for each color section */}
-        <View style={styles.keyContainer}>
-          <View style={styles.keyItem}>
-            <View style={[styles.colorBox, { backgroundColor: '#FF0000' }]} />
-            <Text style={styles.keyLabel}>McDonalds</Text>
-          </View>
-          <View style={styles.keyItem}>
-            <View style={[styles.colorBox, { backgroundColor: '#FF00FF' }]} />
-            <Text style={styles.keyLabel}>Taco Bell</Text>
-          </View>
-          <View style={styles.keyItem}>
-            <View style={[styles.colorBox, { backgroundColor: '#0000FF' }]} />
-            <Text style={styles.keyLabel}>La Vics</Text>
-          </View>
-          <View style={styles.keyItem}>
-            <View style={[styles.colorBox, { backgroundColor: '#00FFFF' }]} />
-            <Text style={styles.keyLabel}>Chipotle</Text>
-          </View>
-          <View style={styles.keyItem}>
-            <View style={[styles.colorBox, { backgroundColor: '#00FF00' }]} />
-            <Text style={styles.keyLabel}>Panda Express</Text>
-          </View>
-          <View style={styles.keyItem}>
-            <View style={[styles.colorBox, { backgroundColor: '#FFFF00' }]} />
-            <Text style={styles.keyLabel}>In N Out</Text>
-          </View>
-        </View>
-      </ScrollView>
     </View>
   );
 };
@@ -90,43 +73,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  topSection: {
-    marginTop: 10,
-    marginLeft: 20,
-  },
-  welcomeText: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#ffaa00',
+    marginBottom: 30,
   },
-  scrollContent: {
-    flexGrow: 1, // Ensures the content inside ScrollView is vertically scrollable
-    justifyContent: 'center',
-    alignItems: 'center',
+  drumContainer: {
+    width: 200,
+    height: 460, 
+    overflow: 'hidden',
+    borderWidth: 5,
+    borderColor: '#ffaa00',
+    borderRadius: 10,
   },
-  wheelContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 50,
-    position: 'relative',
-  },
-  wheel: {
-    width: 300,
-    height: 300,
-    resizeMode: 'contain',
-  },
-  knob: {
+  drum: {
     position: 'absolute',
-    top: -35,  // Adjust this value to position the knob above the wheel
-    left: 150,
-    width: 40,
-    height: 40,
-    marginLeft: -20,  // Centers the knob horizontally (half the width of the knob)
+    width: '100%',
+  },
+  segment: {
+    width: '100%',
+    height: 150, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,     
+    borderColor: '#ffffff', 
+    borderRadius: 10,
+  },
+  segmentLabel: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   spinButton: {
     marginTop: 50,
-    padding: 10,
+    padding: 15,
     borderRadius: 8,
   },
   spinButtonText: {
@@ -134,35 +117,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  subtleText: {
+  resultText: {
+    marginTop: 20,
     fontSize: 22,
     fontWeight: 'bold',
     color: '#ffaa00',
-    textAlign: 'center',
-    marginTop: 25,
   },
-  keyContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  keyItem: {
-    flexDirection: 'column',  // Stack the items vertically
-    alignItems: 'center',
-    margin: 10,
-    width: '40%',  // Limit the width to 40% for each color box (so they can fit two per row)
-  },
-  colorBox: {
-    width: 60,
-    height: 30,
-    marginBottom: 5,
-    borderRadius: 5,
-  },
-  keyLabel: {
-    fontSize: 14,
-    color: '#333',
+  knob: {
+    position: 'absolute',
+    top: 320,
+    right: 60, 
+    transform: [{ translateY: -30 }, { rotate: '90deg' }], 
+    width: 50,
+    height: 50, 
   },
 });
 

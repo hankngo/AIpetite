@@ -1,22 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, StyleSheet, Image, ScrollView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-const AccountScreen = ({ route }) => {
+const AccountScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
-
+  const [userId, setUserId] = useState('');
+  
+  
   useEffect(() => {
-    if (route.params?.email) {
-      setEmail(route.params.email);  // Set email if passed from TabNavigator
-    }
-  }, [route.params]);
+    const fetchUserData = async () => {
+      const storedEmail = await AsyncStorage.getItem('email');
+      const storedUserId = await AsyncStorage.getItem('user_id');
+      setEmail(storedEmail || 'No email found');
+      setUserId(storedUserId || '');
+    };
+
+    fetchUserData();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Static Profile Information */}
       <View style={styles.profileContainer}>
         <Image source={require('../../assets/images/profile_placeholder.png')} style={styles.profilePicture} />
-        <Text style={styles.userName}>'Loading...'</Text>
-        <Text style={styles.userEmail}> {email || 'Loading email...'}</Text>
+        <Text style={styles.userEmail}> {email}</Text>
       </View>
 
 {/* Scrollable Sections */}

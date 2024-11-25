@@ -24,7 +24,7 @@ const AccountHeader = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    marginTop: 40,
+    marginTop: 45,
     height: 60, 
     flexDirection: 'row',
     justifyContent: 'center',

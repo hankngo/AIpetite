@@ -51,12 +51,13 @@ app.post("/login", async(req, res) => {
 
         if (await bcrypt.compare(password, oldUser.password)) {
             const token = jwt.sign(
-                {email: oldUser.email},
+                { user_id: oldUser._id, email: oldUser.email },
                 "RANDOM-TOKEN",
                 {expiresIn: "24h"}
             );
             res.status(200).send({
                 message: "Login successful",
+                user_id: oldUser._id,
                 email: oldUser.email,
                 token,
             });

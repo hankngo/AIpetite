@@ -15,7 +15,7 @@ const CustomHeader = () => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    marginTop: 40,
+    marginTop: 45,
     height: 60,
     marginRight: 14, 
     flexDirection: 'row',

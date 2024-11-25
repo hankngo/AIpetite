@@ -10,16 +10,12 @@ const RecommendScreen = ({ navigation }) => {
   const [rating, setRating] = useState('Any');
   
   const [isPickerVisible, setIsPickerVisible] = useState({
-    allergy: false,
     diet: false,
     serviceType: false,
     mealType: false,
-    healthyOption: false,
     distance: false,
     rating: false,
   });
-  
-  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const togglePickerVisibility = (picker) => {
     setIsPickerVisible((prev) => ({ ...prev, [picker]: !prev[picker] }));
@@ -40,7 +36,7 @@ const RecommendScreen = ({ navigation }) => {
         animationType="slide"
         onRequestClose={() => togglePickerVisibility(pickerKey)}
       >
-        <View style={styles.modalContainer}>
+        <View style={styles.modalOverlay}>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={selectedValue}
@@ -48,34 +44,28 @@ const RecommendScreen = ({ navigation }) => {
                 onChange(itemValue);
                 togglePickerVisibility(pickerKey);
               }}
+              style={styles.picker}
             >
               {value.map((option) => (
                 <Picker.Item label={option.label} value={option.value} key={option.value} />
               ))}
             </Picker>
+            <TouchableOpacity
+              style={styles.closePickerButton}
+              onPress={() => togglePickerVisibility(pickerKey)}
+            >
+              <Text style={styles.closePickerText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
     </View>
   );
-  const showRecommendations = () => {
-    setIsModalVisible(true);
-  };
-
-  // Recommendations data (for now it's a mock data array)
-  const recommendations = [
-    { name: "Healthy Eatery", type: "Restaurant", distance: "3 miles", rating: "4+ Stars" },
-    { name: "Vegan Bistro", type: "Restaurant", distance: "2 miles", rating: "5 Stars" },
-    { name: "Fast Bites", type: "Fast Food", distance: "5 miles", rating: "3+ Stars" },
-    { name: "Local Diner", type: "Locally Owned", distance: "1 mile", rating: "4+ Stars" },
-  ];
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <Text style={styles.header}>Let's Set Your Preferences First:</Text>
-
-        
+        <Text style={styles.header}>Let's Set Your Preferences:</Text>
 
         <PickerOption
           label="Dietary Preference"
@@ -144,43 +134,6 @@ const RecommendScreen = ({ navigation }) => {
           pickerKey="rating"
         />
       </ScrollView>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.recommendButton}
-          onPress={showRecommendations} 
-        >
-          <Text style={styles.recommendButtonText}>Set Preferences</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Recommendations Modal */}
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.recommendationContainer}>
-            <Text style={styles.recommendationHeader}>We Think You Will Like:</Text>
-            <ScrollView style={styles.recommendationList}>
-              {recommendations.map((item, index) => (
-                <View key={index} style={styles.recommendationItem}>
-                  <Text style={styles.recommendationText}>{item.name}</Text>
-                  <Text style={styles.recommendationDetails}>{item.type} - {item.distance} - {item.rating}</Text>
-                </View>
-              ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.recommendationCloseButton}
-              onPress={() => setIsModalVisible(false)}
-            >
-              <Text style={styles.recommendationCloseText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -224,6 +177,31 @@ const styles = StyleSheet.create({
   textBoxText: {
     fontSize: 16,
     color: '#333',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  pickerContainer: {
+    backgroundColor: '#fff',
+    marginHorizontal: 10,
+    borderRadius: 10,
+    padding: 15,
+  },
+  picker: {
+    height: 200,
+    marginBottom: 15,
+  },
+  closePickerButton: {
+    backgroundColor: '#ffaa00',
+    padding: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  closePickerText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   recommendButtonText: {
     color: '#fff',

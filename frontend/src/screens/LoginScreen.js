@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity, ScrollView, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 
 const LoginScreen = ({ navigation, setIsAuthenticated }) => {
@@ -10,15 +11,24 @@ const LoginScreen = ({ navigation, setIsAuthenticated }) => {
   const handleLogin = async () => {
     try {
       const userData = { email, password };
-      const result = await axios.post("http://<ip>:5001/login", userData);
+      const result = await axios.post("http://localhost:5001/login", userData);
+  
+      // Store user_id, email, and token in AsyncStorage
+      await AsyncStorage.setItem('user_id', result.data.user_id); // Store user_id
+      await AsyncStorage.setItem('email', result.data.email);
+      await AsyncStorage.setItem('token', result.data.token);
+  
+      console.log("Stored user_id: ", result.data.user_id); // Log user_id to confirm it's stored correctly
+
+      console.log("Login successful. Navigating to Home...");
+  
+      // Navigate to the Tabs screen
       navigation.navigate('Tabs', { screen: 'HomeTab', params: { email } });
     } catch (error) {
       console.error("Login Error: ", error);
       alert('Login failed. Please check your email and password.');
     }
   };
-  
-  
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
