@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, ScrollView, Alert, Modal } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -8,6 +9,27 @@ const HomeScreen = ({ route, navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [restaurants, setRestaurants] = useState([]);
+  const [foodType, setFoodType] = useState('');
+  const [minRating, setMinRating] = useState(0);
+  const [maxDistance, setMaxDistance] = useState(1500);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const [openMinRating, setOpenMinRating] = useState(false);
+  const [openMaxDistance, setOpenMaxDistance] = useState(false);
+
+  const minRatingOptions = [
+    { label: 'Any', value: 1 },
+    { label: '3+ Stars', value: 3 },
+    { label: '4+ Stars', value: 4 },
+  ];
+
+  const maxDistanceOptions = [
+    { label: '1 mile', value: 1609 },
+    { label: '5 miles', value: 8047 },
+    { label: '10 miles', value: 16093 },
+    { label: '15 miles', value: 24140 },
+    { label: '20 miles', value: 32186 },
+  ];
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -33,7 +55,15 @@ const HomeScreen = ({ route, navigation }) => {
         const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         const { latitude, longitude } = location.coords;
 
-        const response = await axios.post('http://192.168.1.67:5001/nearby-restaurants', { latitude, longitude });
+        const response = await axios.post('http://192.168.1.67:5001/nearby-restaurants', { 
+          latitude, 
+          longitude, 
+          foodType, 
+          minPrice: 0, 
+          maxPrice: 4, 
+          minRating, 
+          maxDistance 
+        });
         setRestaurants(response.data);
       } catch (error) {
         console.error('Error fetching restaurants:', error);
@@ -43,7 +73,7 @@ const HomeScreen = ({ route, navigation }) => {
 
     fetchUserData();
     fetchNearbyRestaurants();
-  }, [route.params]);
+  }, [route.params, foodType, minRating, maxDistance]);
 
   return (
     <View style={styles.container}>
@@ -58,10 +88,64 @@ const HomeScreen = ({ route, navigation }) => {
             style={styles.searchInput}
             placeholder="Search Restaurants"
             placeholderTextColor="#888"
+            onChangeText={setFoodType}
           />
         </View>
       </View>
-      
+
+      <TouchableOpacity
+        style={styles.filterButton}
+        onPress={() => setIsModalVisible(true)}
+      >
+        <Text style={styles.filterButtonText}>Filter Options</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Filter Options</Text>
+
+            <Text style={styles.filterLabel}>Minimum Rating:</Text>
+            <DropDownPicker
+              open={openMinRating}
+              value={minRating}
+              items={minRatingOptions}
+              setOpen={setOpenMinRating}
+              setValue={setMinRating}
+              setItems={() => {}}
+              style={styles.picker}
+              dropDownContainerStyle={styles.dropDownContainer}
+              zIndex={1000}
+            />
+
+            <Text style={styles.filterLabel}>Maximum Distance:</Text>
+            <DropDownPicker
+              open={openMaxDistance}
+              value={maxDistance}
+              items={maxDistanceOptions}
+              setOpen={setOpenMaxDistance}
+              setValue={setMaxDistance}
+              setItems={() => {}}
+              style={styles.picker}
+              dropDownContainerStyle={styles.dropDownContainer2}
+              zIndex={900}
+            />
+
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={() => setIsModalVisible(false)}
+            >
+              <Text style={styles.applyButtonText}>Apply Filters</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <TouchableOpacity
         style={styles.recommendButton}
         onPress={() => navigation.navigate('Recommend')}
@@ -74,7 +158,7 @@ const HomeScreen = ({ route, navigation }) => {
       <ScrollView style={styles.restaurantList}>
         {restaurants.map((restaurant, index) => (
           <View key={index} style={styles.restaurantBox}>
-            <Image id='imagecontainer' source={{ uri: restaurant.photoUrl }} style={styles.restaurantImage} />
+            <Image source={{ uri: restaurant.photoUrl }} style={styles.restaurantImage} />
             <Text style={styles.restaurantInfo}>{restaurant.name}</Text>
             <Text style={styles.restaurantInfo}>★ {restaurant.rating} • {restaurant.vicinity}</Text>
           </View>
@@ -121,6 +205,64 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: '#000',
+  },
+  filterButton: {
+    margin: 20,
+    padding: 15,
+    backgroundColor: '#ffaa00',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  filterLabel: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 5,
+  },
+  picker: {
+    marginBottom: 20,
+  },
+  dropDownContainer: {
+    marginBottom: 20,
+    opacity: 0.9,
+    zIndex: 1001,
+  },
+  dropDownContainer2: {
+    zIndex: 1000,
+    marginBottom: 20,
+    opacity: 0.9,
+  },
+  applyButton: {
+    backgroundColor: '#ffaa00',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   recommendButton: {
     margin: 20,

@@ -154,13 +154,14 @@ app.post("/dining-preferences/:user_id", async(req, res) => {
 
 
 app.post("/nearby-restaurants", async (req, res) => {
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude, foodType, minPrice, maxPrice, minRating, maxDistance } = req.body;
 
     try {
-        const restaurants = await fetchNearbyRestaurants(latitude, longitude);
+        const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice, minRating, maxDistance);
+
         for (const restaurant of restaurants) {
             restaurant.photoUrl = await fetchplaceImage(restaurant.place_id);
-          }
+        }
 
         res.status(200).send(restaurants);
     } catch (error) {
