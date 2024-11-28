@@ -183,12 +183,116 @@ app.post("/random-restaurants", async (req, res) => {
 });
 
 app.post("/suggest-restaurants", async (req, res) => {
-    const { latitude, longitude, foodType, minPrice, maxPrice, openNow } = req.body;
+    const { latitude, longitude, userIds } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).send("Invalid input: userIds should be a non-empty array");
+    }
 
     try {
-        const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice, openNow);
+        const userPreferences = await UserPreferences.find({ user_id: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) } });
+
+        if (userPreferences.length === 0) {
+            return res.status(404).send("No dining preferences found for the provided user IDs");
+        }
+
+        // Aggregate preferences
+        let foodTypes = [];
+        let minPrices = [];
+        let maxPrices = [];
+
+        userPreferences.forEach(pref => {
+            if (pref.cuisine) {
+                foodTypes.push(...pref.cuisine);
+            }
+            if (pref.priceRange && pref.priceRange.min !== undefined) {
+                minPrices.push(pref.priceRange.min);
+            }
+            if (pref.priceRange && pref.priceRange.max !== undefined) {
+                maxPrices.push(pref.priceRange.max);
+            }
+        });
+
+        // Calculate mode for each field
+        const foodType = calculateMode(foodTypes);
+        const minPrice = calculateMode(minPrices);
+        const maxPrice = calculateMode(maxPrices);
+
+        const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice);
+
+        if (restaurants.length === 0) {
+            return res.status(404).send("No nearby restaurants found");
+        }
+
         res.status(200).send(restaurants);
     } catch (error) {
         res.status(500).send("Error suggesting restaurants: " + error.message);
+    }
+});
+
+const calculateMode = (array) => {
+    const frequency = {};
+    let maxFreq = 0;
+    let mode;
+
+    array.forEach(item => {
+        frequency[item] = (frequency[item] || 0) + 1;
+        if (frequency[item] > maxFreq) {
+            maxFreq = frequency[item];
+            mode = item;
+        }
+    });
+
+    return mode;
+};
+
+app.post("/group-restaurant", async (req, res) => {
+    const { latitude, longitude, userIds } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).send("Invalid input: userIds should be a non-empty array");
+    }
+
+    try {
+        const userPreferences = await UserPreferences.find({ user_id: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) } });
+
+        if (userPreferences.length === 0) {
+            return res.status(404).send("No dining preferences found for the provided user IDs");
+        }
+
+        // Aggregate preferences
+        let foodTypes = [];
+        let minPrices = [];
+        let maxPrices = [];
+
+        userPreferences.forEach(pref => {
+            if (pref.cuisine) {
+                foodTypes.push(...pref.cuisine);
+            }
+            if (pref.priceRange && pref.priceRange.min !== undefined) {
+                minPrices.push(pref.priceRange.min);
+            }
+            if (pref.priceRange && pref.priceRange.max !== undefined) {
+                maxPrices.push(pref.priceRange.max);
+            }
+        });
+
+        // Calculate mode for each field
+        const foodType = calculateMode(foodTypes);
+        const minPrice = calculateMode(minPrices);
+        const maxPrice = calculateMode(maxPrices);
+
+        const restaurants = await fetchNearbyRestaurants(latitude, longitude, foodType, minPrice, maxPrice);
+
+        if (restaurants.length === 0) {
+            return res.status(404).send("No nearby restaurants found");
+        }
+
+        // Select the best restaurant (assuming the first restaurant is the best match)
+        const selectedRestaurant = restaurants[0];
+
+        res.status(200).send(selectedRestaurant);
+    } catch (error) {
+        res.status(500).send("Error selecting group restaurant: " + error.message);
     }
 });

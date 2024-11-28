@@ -34,7 +34,8 @@ const UserVisitedPlacesSchema = new mongoose.Schema(
                 _id: false,
                 restaurants_id: {type: String, required: true, unique: true},
                 restaurant_name: {type: String, required: true},
-                location: {type: String, required: true, unique: true}
+                location: {type: String, required: true, unique: true},
+                rating: {type: Number, required: true},
             }
         ]
     },
