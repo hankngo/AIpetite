@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, ScrollView, Alert } from 'react-native';
+import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const HomeScreen = ({ route, navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [restaurants, setRestaurants] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const storedName = await AsyncStorage.getItem('name'); 
-        const storedEmail = await AsyncStorage.getItem('email'); 
+        const storedName = JSON.parse(await AsyncStorage.getItem('name')); 
+        const storedEmail = JSON.parse(await AsyncStorage.getItem('email')); 
         
         setName(storedName || 'No name found');
         setEmail(route.params?.email || storedEmail || 'No email found');
@@ -19,7 +22,27 @@ const HomeScreen = ({ route, navigation }) => {
       }
     };
 
+    const fetchNearbyRestaurants = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required to fetch nearby restaurants.');
+        return;
+      }
+
+      try {
+        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const { latitude, longitude } = location.coords;
+
+        const response = await axios.post('http://192.168.1.67:5001/nearby-restaurants', { latitude, longitude });
+        setRestaurants(response.data);
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        Alert.alert('Error', 'Unable to fetch nearby restaurants. Please try again.');
+      }
+    };
+
     fetchUserData();
+    fetchNearbyRestaurants();
   }, [route.params]);
 
   return (
@@ -46,25 +69,16 @@ const HomeScreen = ({ route, navigation }) => {
         <Text style={styles.recommendButtonText}>Get a Recommendation</Text>
       </TouchableOpacity>
 
-      <Text style={styles.recommendationText}>Feeling Adventurous? You Might Like:</Text>
-
+      <Text style={styles.recommendationText}>Nearby Restaurants:</Text>
 
       <ScrollView style={styles.restaurantList}>
-        <View style={styles.restaurantBox}>
-          <Image source={require('../../assets/images/bagel.png')} style={styles.restaurantImage} />
-          <Text style={styles.restaurantInfo}>Eswar's Bagels</Text>
-          <Text style={styles.restaurantInfo}>★ 4.8 • 0.1 miles away • 15 reviews</Text>
-        </View>
-        <View style={styles.restaurantBox}>
-          <Image source={require('../../assets/images/sample_restaurant.png')} style={styles.restaurantImage} />
-          <Text style={styles.restaurantInfo}>Jose's Hotdogs</Text>
-          <Text style={styles.restaurantInfo}>★ 4.2 • 2.7 miles away • 20 reviews</Text>
-        </View>
-        <View style={styles.restaurantBox}>
-          <Image source={require('../../assets/images/krusty_krab.png')} style={styles.restaurantImage} />
-          <Text style={styles.restaurantInfo}>Krusty Krab</Text>
-          <Text style={styles.restaurantInfo}>★ 2.0 • 3.2 miles away • 5 reviews</Text>
-        </View>
+        {restaurants.map((restaurant, index) => (
+          <View key={index} style={styles.restaurantBox}>
+            <Image id='imagecontainer' source={{ uri: restaurant.photoUrl }} style={styles.restaurantImage} />
+            <Text style={styles.restaurantInfo}>{restaurant.name}</Text>
+            <Text style={styles.restaurantInfo}>★ {restaurant.rating} • {restaurant.vicinity}</Text>
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
@@ -108,6 +122,18 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#000',
   },
+  recommendButton: {
+    margin: 20,
+    padding: 15,
+    backgroundColor: '#ffaa00',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  recommendButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   recommendationText: {
     marginTop: 5,
     marginLeft: 20,
@@ -124,31 +150,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: '#f2f2f2',
     borderRadius: 10,
-    borderColor: '#ffaa00',
-    borderWidth: 2,
-    overflow: 'hidden',
+    padding: 10,
   },
   restaurantImage: {
     width: '100%',
-    height: 225,
-    resizeMode: 'stretch',
+    height: 150,
+    borderRadius: 10,
   },
   restaurantInfo: {
     padding: 5,
     fontSize: 14,
     color: '#666',
-  },
-  recommendButton: {
-    margin: 20,
-    padding: 15,
-    backgroundColor: '#ffaa00',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  recommendButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 

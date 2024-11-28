@@ -12,6 +12,7 @@ app.use(express.json());
 dotenv.config();
 
 const fetchNearbyRestaurants = require('./searchRestaurants');
+const fetchplaceImage = require('./placePhotos');
 
 const dbConnect = require("./db/dbConnect");
 dbConnect();
@@ -157,6 +158,10 @@ app.post("/nearby-restaurants", async (req, res) => {
 
     try {
         const restaurants = await fetchNearbyRestaurants(latitude, longitude);
+        for (const restaurant of restaurants) {
+            restaurant.photoUrl = await fetchplaceImage(restaurant.place_id);
+          }
+
         res.status(200).send(restaurants);
     } catch (error) {
         res.status(500).send("Error retrieving nearby restaurants: " + error.message);
