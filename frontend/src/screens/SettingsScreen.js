@@ -1,34 +1,30 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Button, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from '../context/AuthContext'; 
 
-const SettingsScreen = ({ navigation, setIsAuthenticated }) => {
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+const SettingsScreen = ({ navigation }) => {
+  const { setIsAuthenticated } = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      console.log('AsyncStorage cleared. User logged out successfully.');
+      setIsAuthenticated(false); 
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }], 
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      alert('There was an issue logging out. Please try again.');
+    }
   };
+  
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <View style={styles.settingsOption}>
-          <Text style={styles.optionText}>Preferences</Text>
-        </View>
-        <View style={styles.settingsOption}>
-          <Text style={styles.optionText}>Privacy</Text>
-        </View>
-        <View style={styles.settingsOption}>
-          <Text style={styles.optionText}>Notifications</Text>
-        </View>
-        <View style={styles.settingsOption}>
-          <Text style={styles.optionText}>Help</Text>
-        </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <Button title="Logout" onPress={handleLogout} />
     </View>
   );
 };
@@ -36,29 +32,8 @@ const SettingsScreen = ({ navigation, setIsAuthenticated }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
-  },
-  contentContainer: {
-    flexGrow: 1,
-  },
-  settingsOption: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  optionText: {
-    fontSize: 18,
-    color: '#333',
-  },
-  logoutButton: {
-    marginTop: 20,
-    alignSelf: 'flex-start',
-  },
-  logoutText: {
-    fontSize: 18,
-    color: 'red',
-    textDecorationLine: 'underline',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
