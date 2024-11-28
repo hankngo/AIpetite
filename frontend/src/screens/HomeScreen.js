@@ -18,7 +18,7 @@ const HomeScreen = ({ route, navigation }) => {
   const [openMaxDistance, setOpenMaxDistance] = useState(false);
 
   const minRatingOptions = [
-    { label: 'Any', value: 1 },
+    { label: 'Any', value: 0 },
     { label: '3+ Stars', value: 3 },
     { label: '4+ Stars', value: 4 },
   ];
@@ -27,8 +27,6 @@ const HomeScreen = ({ route, navigation }) => {
     { label: '1 mile', value: 1609 },
     { label: '5 miles', value: 8047 },
     { label: '10 miles', value: 16093 },
-    { label: '15 miles', value: 24140 },
-    { label: '20 miles', value: 32186 },
   ];
 
   useEffect(() => {
@@ -55,6 +53,19 @@ const HomeScreen = ({ route, navigation }) => {
         const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         const { latitude, longitude } = location.coords;
 
+        // Check if the location has changed
+        const cachedLocation = JSON.parse(await AsyncStorage.getItem('location'));
+        if (cachedLocation && cachedLocation.latitude === latitude && cachedLocation.longitude === longitude) {
+          // Retrieve cached restaurants
+          const cachedRestaurants = JSON.parse(await AsyncStorage.getItem('nearby_restaurants'));
+          if (cachedRestaurants) {
+            setRestaurants(cachedRestaurants);
+            console.log('Loaded nearby restaurants from cache');
+            return;
+          }
+        }
+
+        // Fetch nearby restaurants from the backend
         const response = await axios.post('http://192.168.1.67:5001/nearby-restaurants', { 
           latitude, 
           longitude, 
@@ -65,6 +76,10 @@ const HomeScreen = ({ route, navigation }) => {
           maxDistance 
         });
         setRestaurants(response.data);
+
+        // Cache the location and nearby restaurants
+        await AsyncStorage.setItem('location', JSON.stringify({ latitude, longitude }));
+        await AsyncStorage.setItem('nearby_restaurants', JSON.stringify(response.data));
       } catch (error) {
         console.error('Error fetching restaurants:', error);
         Alert.alert('Error', 'Unable to fetch nearby restaurants. Please try again.');
@@ -119,7 +134,7 @@ const HomeScreen = ({ route, navigation }) => {
               setValue={setMinRating}
               setItems={() => {}}
               style={styles.picker}
-              dropDownContainerStyle={styles.dropDownContainer}
+              dropDownContainerStyle={[styles.dropDownContainer, { zIndex: 1000 }]}
               zIndex={1000}
             />
 
@@ -132,7 +147,7 @@ const HomeScreen = ({ route, navigation }) => {
               setValue={setMaxDistance}
               setItems={() => {}}
               style={styles.picker}
-              dropDownContainerStyle={styles.dropDownContainer2}
+              dropDownContainerStyle={[styles.dropDownContainer, { zIndex: 900 }]}
               zIndex={900}
             />
 
@@ -246,12 +261,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   dropDownContainer: {
-    marginBottom: 20,
-    opacity: 0.9,
-    zIndex: 1001,
-  },
-  dropDownContainer2: {
-    zIndex: 1000,
     marginBottom: 20,
     opacity: 0.9,
   },

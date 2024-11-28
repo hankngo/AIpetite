@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const RestaurantDetailsScreen = ({ route }) => {
@@ -10,9 +11,21 @@ const RestaurantDetailsScreen = ({ route }) => {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        const response = await axios.get(`http://192.168.1.67:5001/restaurant/${restaurantId}`);
-        setRestaurant(response.data);
-        setLoading(false);
+        // Check if the restaurant details are cached
+        const cachedData = await AsyncStorage.getItem(`restaurant_${restaurantId}`);
+        if (cachedData) {
+          setRestaurant(JSON.parse(cachedData));
+          setLoading(false);
+          console.log('Loaded restaurant details from cache');
+        } else {
+          // Fetch restaurant details from the backend
+          const response = await axios.get(`http://192.168.1.67:5001/restaurant/${restaurantId}`);
+          setRestaurant(response.data);
+          setLoading(false);
+
+          // Cache the restaurant details
+          await AsyncStorage.setItem(`restaurant_${restaurantId}`, JSON.stringify(response.data));
+        }
       } catch (error) {
         console.error('Error fetching restaurant details:', error);
         setLoading(false);

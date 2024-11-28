@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const {UserInfo, UserPreferences, UserVisitedHistory} = require("./db/userModels");
+const { RestaurantInfo } = require("./db/restarauntModels");
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
@@ -304,22 +305,37 @@ app.post("/group-restaurant", async (req, res) => {
 });
 
 app.get("/restaurant/:place_id", async (req, res) => {
-    const { place_id } = req.params;
-  
-    try {
-      const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${process.env.GOOGLE_API_KEY}`);
-      const restaurant = response.data.result;
-  
-      // Example structure for restaurant details
-      const restaurantDetails = {
-        name: restaurant.name,
-        description: "Coming Soon!", // Example description from reviews
-        photoUrl: restaurant.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${restaurant.photos[0].photo_reference}&key=${process.env.GOOGLE_API_KEY}` : null,
-        website: restaurant.website || '',
-      };
-  
-      res.status(200).json(restaurantDetails);
-    } catch (error) {
-      res.status(500).send("Error retrieving restaurant details: " + error.message);
-    }
-  });
+  const { place_id } = req.params;
+
+  try {
+    // Check if the restaurant details are in the cache
+        // Check if the restaurant details are in the database
+        let restaurant = await RestaurantInfo.findOne({ place_id });
+
+        if (!restaurant) {
+          // Fetch restaurant details from the API
+          const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${process.env.GOOGLE_API_KEY}`);
+          const data = response.data.result;
+
+          // Create a new restaurant document
+          restaurant = new RestaurantInfo({
+            place_id,
+            name: data.name,
+            location: data.formatted_address,
+            rating: data.rating,
+            description: "Coming Soon!", // Example description from reviews
+            photoUrl: data.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${data.photos[0].photo_reference}&key=${process.env.GOOGLE_API_KEY}` : null,
+            website: data.website || '',
+          });
+          console.log(restaurant);
+
+          // Save the restaurant details to the database
+          await restaurant.save();
+        }
+
+        res.status(200).json(restaurant);
+      }
+        catch (error) {
+            res.status(500).send("Error fetching restaurant details: " + error.message);
+        }
+    });
