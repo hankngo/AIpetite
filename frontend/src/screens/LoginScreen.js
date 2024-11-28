@@ -16,10 +16,11 @@ const LoginScreen = ({ navigation, setIsAuthenticated }) => {
       // Store user_id, email, and token in AsyncStorage
       await AsyncStorage.setItem('user_id', result.data.user_id); // Store user_id
       await AsyncStorage.setItem('email', result.data.email);
+      await AsyncStorage.setItem('name', result.data.name);
       await AsyncStorage.setItem('token', result.data.token);
   
-      console.log("Stored user_id: ", result.data.user_id); // Log user_id to confirm it's stored correctly
-
+      console.log("Stored user_id: ", result.data.user_id);
+      console.log("Stored name: ", result.data.name);
       console.log("Login successful. Navigating to Home...");
   
       // Navigate to the Tabs screen

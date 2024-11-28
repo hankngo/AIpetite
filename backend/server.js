@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/register", async(req, res) => {
-    const {email, password} = req.body;
+    const {email, password, name} = req.body;
     try {
         const oldUser = await UserInfo.findOne({email: email});
         if (oldUser) {
@@ -33,6 +33,7 @@ app.post("/register", async(req, res) => {
         const newUser= await UserInfo.create({
             email: email,
             password: hashedPassword,
+            name: name,
         });
         await newUser.save();
         return res.status(201).send("User registered successfully");
@@ -59,6 +60,7 @@ app.post("/login", async(req, res) => {
                 message: "Login successful",
                 user_id: oldUser._id,
                 email: oldUser.email,
+                name: oldUser.name,
                 token,
             });
         } else {

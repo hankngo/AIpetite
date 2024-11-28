@@ -1,20 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, ScrollView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = ({ route, navigation }) => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
   useEffect(() => {
-    // Check if email is passed via navigation params
-    if (route.params?.email) {
-      setEmail(route.params.email); // Set email if passed
-    }
+    const fetchUserData = async () => {
+      try {
+        const storedName = await AsyncStorage.getItem('name'); 
+        const storedEmail = await AsyncStorage.getItem('email'); 
+        
+        setName(storedName || 'No name found');
+        setEmail(route.params?.email || storedEmail || 'No email found');
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
   }, [route.params]);
 
   return (
     <View style={styles.container}>
       <View style={styles.topSection}>
-        <Text style={styles.welcomeText}>Welcome, {email}!</Text>
+        <Text style={styles.welcomeText}>Welcome, {name}!</Text>
       </View>
 
       <View style={styles.searchContainer}>
