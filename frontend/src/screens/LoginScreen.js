@@ -8,16 +8,25 @@ const LoginScreen = ({ navigation, setIsAuthenticated }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const storeData = async (key, value) => {
+    try {
+        await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.error('Error storing data:', error);
+    }
+};
+
   const handleLogin = async () => {
     try {
       const userData = { email, password };
-      const result = await axios.post("http://localhost:5001/login", userData);
+      const result = await axios.post("http://192.168.1.67:5001/login", userData);
+      console.log(result.data);
   
       // Store user_id, email, and token in AsyncStorage
-      await AsyncStorage.setItem('user_id', result.data.user_id); // Store user_id
-      await AsyncStorage.setItem('email', result.data.email);
-      await AsyncStorage.setItem('name', result.data.name);
-      await AsyncStorage.setItem('token', result.data.token);
+      await storeData('user_id', result.data.user_id); // Store user_id
+      await storeData('email', result.data.email);
+      await storeData('name', result.data.name);
+      await storeData('token', result.data.token);
   
       console.log("Stored user_id: ", result.data.user_id);
       console.log("Stored name: ", result.data.name);
@@ -26,8 +35,22 @@ const LoginScreen = ({ navigation, setIsAuthenticated }) => {
       // Navigate to the Tabs screen
       navigation.navigate('Tabs', { screen: 'HomeTab', params: { email } });
     } catch (error) {
-      console.error("Login Error: ", error);
-      alert('Login failed. Please check your email and password.');
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Login Error: ", error.response.data);
+        console.error("Status Code: ", error.response.status);
+        console.error("Headers: ", error.response.headers);
+        Alert.alert('Login failed', `Error: ${error.response.data.message || 'An error occurred'}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("Login Error: No response received", error.request);
+        Alert.alert('Login failed', 'No response received from the server. Please check your network connection.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Login Error: ", error.message);
+        Alert.alert('Login failed', `Error: ${error.message}`);
+      }
     }
   };
 

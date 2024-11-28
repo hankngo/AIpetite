@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const dotenv = require('dotenv');
+const cors = require('cors');
+app.use(cors());
 app.use(express.json());
 dotenv.config();
 

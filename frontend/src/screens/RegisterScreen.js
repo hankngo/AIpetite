@@ -23,10 +23,10 @@ const RegisterScreen = ({ navigation }) => {
     }
     try {
       const userData = {email, password};
-      const result = await axios.post("http://localhost:5001/register", userData); 
+      const result = await axios.post("http://192.168.1.67:5001/register", userData); 
       console.log(result);
       alert('Registration successful!');
-      navigation.replace('Home');
+      navigation.navigate('Recommend');
     } catch (error) {
       console.error("Registration Error: ", error);
       alert('Registration failed. Please try again.');
