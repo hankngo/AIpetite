@@ -330,12 +330,6 @@ const styles = StyleSheet.create({
   placeContainer: {
     marginBottom: 10, 
   },
-  
-  divider: {
-    height: 1,
-    backgroundColor: '#ccc', 
-    marginVertical: 5,
-  },
 });
 
 export default AccountScreen;

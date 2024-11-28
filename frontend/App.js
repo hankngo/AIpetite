@@ -3,6 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Image } from 'react-native';
+import { AuthProvider } from './src/context/AuthContext'; 
+
 
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen'; 
@@ -113,19 +115,13 @@ const TabNavigator = ({ route }) => {
 };
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName={isAuthenticated ? 'Tabs' : 'Login'}>
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
-        <Stack.Screen
-          name="Tabs"
-          component={TabNavigator}
-          options={{ headerShown: false }}
-          initialParams={{setIsAuthenticated }}
-        />
+    <AuthProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Login">
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
         <Stack.Screen
           name="Recommend"
           component={RecommendScreen}
@@ -146,23 +142,22 @@ const App = () => {
         />
         <Stack.Screen
           name="Settings"
+          component={SettingsScreen} 
           options={{
             title: 'Settings',
-            headerBackTitle: 'Account', 
+            headerBackTitle: 'Account',
             headerBackTitleStyle: {
               color: 'black',
               fontWeight: 'bold',
             },
             headerBackImage: () => (
               <Image
-                source={require('./assets/images/back_icon.png')} // Your back arrow image
-                style={{ width: 24, height: 24, tintColor: '#ffaa00' }} // Set the back arrow color to #ffaa00
+                source={require('./assets/images/back_icon.png')}
+                style={{ width: 24, height: 24, tintColor: '#ffaa00' }} 
               />
             ),
           }}
-        >
-          {(props) => <SettingsScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
-        </Stack.Screen>
+        />
         <Stack.Screen
           name="Terms"
           component={TermsScreen}
@@ -183,6 +178,7 @@ const App = () => {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </AuthProvider>
   );
 };
 
