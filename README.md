@@ -54,10 +54,18 @@
     ```
 2. **Start the frontend application:**
     ```bash
-    npm start
+    npx expo start
     ```
     The project should now be running with the backend on port 5001 and the frontend on its designated port (usually 3000).
-
+   
+3. **If running on Mac, use iOS simulator by pressing 'i' key:**
+    ```bash
+    › Press i │ open iOS simulator
+    ```
+3. **Once simulator is loaded, press "Command + d" and enable Fast Refresh so you do not have to reload app after each edit:**
+    ```bash
+    Command + d
+    ```
 ## Making Changes
 - **IMPORTANT** Please don't directly push to the main ever
 - For any **new feature** you’re working on, you should **create a new branch** and **make changes on your own branch**.
