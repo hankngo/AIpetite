@@ -6,10 +6,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const dotenv = require('dotenv');
+const fetchReviews = require('./components/fetchReviews');
+const generateDescription = require('./components/descGenerator');
+const fetchNearbyRestaurants = require('./components/searchRestaurants');
 app.use(express.json());
 dotenv.config();
 
-const fetchNearbyRestaurants = require('./searchRestaurants');
+
 
 const dbConnect = require("./db/dbConnect");
 dbConnect();
@@ -291,3 +294,15 @@ app.post("/group-restaurant", async (req, res) => {
         res.status(500).send("Error selecting group restaurant: " + error.message);
     }
 });
+  
+//   app.post('/generate-description', async (req, res) => {
+//     const { placeId } = req.body;
+  
+//     try {
+//       const reviews = await fetchReviews(placeId);
+//       const description = await generateDescription(reviews);
+//       res.status(200).send({ description });
+//     } catch (error) {
+//       res.status(500).send('Error generating description: ' + error.message);
+//     }
+//   });
