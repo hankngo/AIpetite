@@ -302,3 +302,24 @@ app.post("/group-restaurant", async (req, res) => {
         res.status(500).send("Error selecting group restaurant: " + error.message);
     }
 });
+
+app.get("/restaurant/:place_id", async (req, res) => {
+    const { place_id } = req.params;
+  
+    try {
+      const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${process.env.GOOGLE_API_KEY}`);
+      const restaurant = response.data.result;
+  
+      // Example structure for restaurant details
+      const restaurantDetails = {
+        name: restaurant.name,
+        description: "Coming Soon!", // Example description from reviews
+        photoUrl: restaurant.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${restaurant.photos[0].photo_reference}&key=${process.env.GOOGLE_API_KEY}` : null,
+        website: restaurant.website || '',
+      };
+  
+      res.status(200).json(restaurantDetails);
+    } catch (error) {
+      res.status(500).send("Error retrieving restaurant details: " + error.message);
+    }
+  });

@@ -157,11 +157,13 @@ const HomeScreen = ({ route, navigation }) => {
 
       <ScrollView style={styles.restaurantList}>
         {restaurants.map((restaurant, index) => (
-          <View key={index} style={styles.restaurantBox}>
-            <Image source={{ uri: restaurant.photoUrl }} style={styles.restaurantImage} />
-            <Text style={styles.restaurantInfo}>{restaurant.name}</Text>
-            <Text style={styles.restaurantInfo}>★ {restaurant.rating} • {restaurant.vicinity}</Text>
-          </View>
+          <TouchableOpacity key={index} onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: restaurant.place_id })}>
+            <View style={styles.restaurantBox}>
+              <Image source={{ uri: restaurant.photoUrl }} style={styles.restaurantImage} />
+              <Text style={styles.restaurantInfo}>{restaurant.name}</Text>
+              <Text style={styles.restaurantInfo}>★ {restaurant.rating} • {restaurant.vicinity}</Text>
+            </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
