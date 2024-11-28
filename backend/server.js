@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const dotenv = require('dotenv');
+const cors = require('cors');
+app.use(cors());
 app.use(express.json());
 dotenv.config();
 
@@ -23,7 +25,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/register", async(req, res) => {
-    const {email, password} = req.body;
+    const {email, password, name} = req.body;
     try {
         const oldUser = await UserInfo.findOne({email: email});
         if (oldUser) {
@@ -33,6 +35,7 @@ app.post("/register", async(req, res) => {
         const newUser= await UserInfo.create({
             email: email,
             password: hashedPassword,
+            name: name,
         });
         await newUser.save();
         return res.status(201).send("User registered successfully");
@@ -51,13 +54,15 @@ app.post("/login", async(req, res) => {
 
         if (await bcrypt.compare(password, oldUser.password)) {
             const token = jwt.sign(
-                {email: oldUser.email},
+                { user_id: oldUser._id, email: oldUser.email },
                 "RANDOM-TOKEN",
                 {expiresIn: "24h"}
             );
             res.status(200).send({
                 message: "Login successful",
+                user_id: oldUser._id,
                 email: oldUser.email,
+                name: oldUser.name,
                 token,
             });
         } else {
