@@ -12,11 +12,12 @@ app.use(cors());
 const fetchReviews = require('./components/fetchReviews');
 const generateDescription = require('./components/descGenerator');
 const fetchNearbyRestaurants = require('./components/searchRestaurants');
+const fetchplaceImage = require('./components/placePhotos');
 app.use(express.json());
 dotenv.config();
 
 
-const fetchplaceImage = require('./placePhotos');
+
 
 const dbConnect = require("./db/dbConnect");
 dbConnect();
@@ -318,7 +319,11 @@ app.get("/restaurant/:place_id", async (req, res) => {
         if (!restaurant) {
           // Fetch restaurant details from the API
           const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${process.env.GOOGLE_API_KEY}`);
+          const ai_description = await axios.post('http://localhost:5001/generate-description', { placeId: place_id });
+          const description = ai_description.data.description;
           const data = response.data.result;
+          console.log(response);
+          console.log(ai_description);
 
           // Create a new restaurant document
           restaurant = new RestaurantInfo({
@@ -326,7 +331,7 @@ app.get("/restaurant/:place_id", async (req, res) => {
             name: data.name,
             location: data.formatted_address,
             rating: data.rating,
-            description: "Coming Soon!", // Example description from reviews
+            description: description, // Example description from reviews
             photoUrl: data.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${data.photos[0].photo_reference}&key=${process.env.GOOGLE_API_KEY}` : null,
             website: data.website || '',
           });
@@ -343,14 +348,18 @@ app.get("/restaurant/:place_id", async (req, res) => {
         }
     });
   
-//   app.post('/generate-description', async (req, res) => {
-//     const { placeId } = req.body;
-  
-//     try {
-//       const reviews = await fetchReviews(placeId);
-//       const description = await generateDescription(reviews);
-//       res.status(200).send({ description });
-//     } catch (error) {
-//       res.status(500).send('Error generating description: ' + error.message);
-//     }
-//   });
+    
+    
+    app.post('/generate-description', async (req, res) => {
+      const { placeId } = req.body;
+      try {
+        // Fetch reviews and generate a new description
+        const reviews = await fetchReviews(placeId);
+        let description = await generateDescription(reviews);
+        description = description.content;
+
+        res.status(200).send({ description });
+      } catch (error) {
+        res.status(500).send('Error generating description: ' + error.message);
+      }
+    });
