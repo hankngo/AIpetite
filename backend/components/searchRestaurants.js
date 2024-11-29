@@ -1,17 +1,16 @@
 const axios = require('axios');
 
-const fetchNearbyRestaurants = async (latitude, longitude, foodType = '', minPrice, maxPrice, openNow = false) => {
+const fetchNearbyRestaurants = async (latitude, longitude, foodType = '', minPrice, maxPrice, minRating = 0, maxDistance = 1500) => {
     const apiKey = process.env.GOOGLE_API_KEY;
 
     const params = {
         location: `${latitude},${longitude}`,
-        radius: '1500',
+        radius: maxDistance,
         type: 'restaurant',
         key: apiKey,
         keyword: foodType || undefined, // Set undefined if empty
         minprice: minPrice,
         maxprice: maxPrice,
-        opennow: openNow ? 'true' : undefined // Only adding if true
     };
 
     // Filter out undefined parameters
@@ -23,16 +22,14 @@ const fetchNearbyRestaurants = async (latitude, longitude, foodType = '', minPri
 
     try {
         const response = await axios.get(url);
-        const restaurants = response.data.results;
+        let restaurants = response.data.results;
 
-        // Sorts by distance (assuming the API returns results sorted by distance)
-        // Then sorts by rating
-        restaurants.sort((a, b) => {
-            if (a.geometry.location.lat === b.geometry.location.lat && a.geometry.location.lng === b.geometry.location.lng) {
-                return b.rating - a.rating; // Sort by rating if distances are equal
-            }
-            return 0; // Keep the original order by distance
-        });
+        // Filter by rating
+        restaurants = restaurants.filter(restaurant => restaurant.rating >= minRating);
+
+        // Sort by distance (assuming the API returns results sorted by distance)
+        // Then sort by rating
+        restaurants.sort((a, b) => b.rating - a.rating);
 
         return restaurants;
     } catch (error) {
