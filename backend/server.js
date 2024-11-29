@@ -9,10 +9,13 @@ const axios = require('axios');
 const dotenv = require('dotenv');
 const cors = require('cors');
 app.use(cors());
+const fetchReviews = require('./components/fetchReviews');
+const generateDescription = require('./components/descGenerator');
+const fetchNearbyRestaurants = require('./components/searchRestaurants');
 app.use(express.json());
 dotenv.config();
 
-const fetchNearbyRestaurants = require('./searchRestaurants');
+
 const fetchplaceImage = require('./placePhotos');
 
 const dbConnect = require("./db/dbConnect");
@@ -339,3 +342,15 @@ app.get("/restaurant/:place_id", async (req, res) => {
             res.status(500).send("Error fetching restaurant details: " + error.message);
         }
     });
+  
+//   app.post('/generate-description', async (req, res) => {
+//     const { placeId } = req.body;
+  
+//     try {
+//       const reviews = await fetchReviews(placeId);
+//       const description = await generateDescription(reviews);
+//       res.status(200).send({ description });
+//     } catch (error) {
+//       res.status(500).send('Error generating description: ' + error.message);
+//     }
+//   });
