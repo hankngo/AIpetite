@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, ActivityIndicator, TouchableOpacity, Linking, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
@@ -35,6 +35,45 @@ const RestaurantDetailsScreen = ({ route }) => {
     fetchRestaurantDetails();
   }, [restaurantId]);
 
+ const saveRestaurant = async () => {
+  try {
+    const userId = await AsyncStorage.getItem('user_id');
+    if (!userId) {
+      Alert.alert('Error', 'User not logged in');
+      return;
+    }
+
+    console.log('User ID:', userId); 
+
+    if (!restaurant || !restaurant.name || !restaurant.location || !restaurantId) {
+      Alert.alert('Error', 'Invalid restaurant data');
+      return;
+    }
+
+    
+
+    const response = await axios.post('http://192.168.1.67:5001/save-restaurant', {
+      userId,
+      restaurantId,
+      name: restaurant.name,
+      location: restaurant.location,
+    });
+
+    if (response.status === 200) {
+      Alert.alert('Success', 'Restaurant saved successfully');
+    } else {
+      Alert.alert('Error', 'Failed to save restaurant. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error saving restaurant:', error);
+    if (error.response) {
+      console.error('Server responded with:', error.response.data);
+    }
+    Alert.alert('Error', 'Failed to save restaurant. Please try again.');
+  }
+};
+
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -62,6 +101,12 @@ const RestaurantDetailsScreen = ({ route }) => {
           onPress={() => Linking.openURL(restaurant.website)}
         >
           <Text style={styles.websiteButtonText}>View Menu</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={saveRestaurant}
+        >
+          <Text style={styles.saveButtonText}>Save Restaurant</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -108,8 +153,20 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginBottom: 10,
   },
   websiteButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    backgroundColor: '#ffaa00',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  saveButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',

@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const {UserInfo, UserPreferences, UserVisitedHistory} = require("./db/userModels");
+const {UserInfo, UserPreferences, UserVisitedHistory, UserSavedPlaces} = require("./db/userModels");
 const { RestaurantInfo } = require("./db/restarauntModels");
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
@@ -15,7 +15,6 @@ const fetchNearbyRestaurants = require('./components/searchRestaurants');
 const fetchplaceImage = require('./components/placePhotos');
 app.use(express.json());
 dotenv.config();
-
 
 
 
@@ -363,3 +362,41 @@ app.get("/restaurant/:place_id", async (req, res) => {
         res.status(500).send('Error generating description: ' + error.message);
       }
     });
+
+    
+
+app.post("/save-restaurant", async (req, res) => {
+  const { userId, restaurantId, name, location } = req.body;
+
+  try {
+    const objectId  = userId.replace(/['"]+/g, ''); 
+    // Check if the restaurant is already in the user's saved list
+    let userSavedPlaces = await UserSavedPlaces.findOne({ user_id: objectId });
+    if (userSavedPlaces && userSavedPlaces.restaurants.some(r => r.restaurants_id === restaurantId)) {
+      return res.status(400).send("Restaurant already saved");
+    }
+
+    // Add the restaurant to the user's saved list
+    if (userSavedPlaces) {
+      userSavedPlaces.restaurants.push({
+        restaurants_id: restaurantId,
+        restaurant_name: name,
+        location: location,
+      });
+      await userSavedPlaces.save();
+    } else {
+      await UserSavedPlaces.create({
+        user_id: userId,
+        restaurants: [{
+          restaurants_id: restaurantId,
+          restaurant_name: name,
+          location: location,
+        }],
+      });
+    }
+
+    res.status(200).send("Restaurant saved successfully");
+  } catch (error) {
+    res.status(500).send("Error saving restaurant: " + error.message);
+  }
+});
