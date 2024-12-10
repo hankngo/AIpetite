@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, FlatList } from 'react-native';
 
 const RecommendScreen = ({ navigation }) => {
   const [diet, setDiet] = useState('None');
@@ -8,57 +7,45 @@ const RecommendScreen = ({ navigation }) => {
   const [mealType, setMealType] = useState('Any');
   const [distance, setDistance] = useState('Any');
   const [rating, setRating] = useState('Any');
-  
-  const [isPickerVisible, setIsPickerVisible] = useState({
-    diet: false,
-    serviceType: false,
-    mealType: false,
-    distance: false,
-    rating: false,
-  });
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentPicker, setCurrentPicker] = useState(null);
+  const [options, setOptions] = useState([]);
 
-  const togglePickerVisibility = (picker) => {
-    setIsPickerVisible((prev) => ({ ...prev, [picker]: !prev[picker] }));
+  const openModal = (pickerKey, optionsList) => {
+    setCurrentPicker(pickerKey);
+    setOptions(optionsList);
+    setIsModalVisible(true);
   };
 
-  const PickerOption = ({ label, value, selectedValue, onChange, pickerKey }) => (
+  const handleSelection = (value) => {
+    switch (currentPicker) {
+      case 'diet':
+        setDiet(value);
+        break;
+      case 'serviceType':
+        setServiceType(value);
+        break;
+      case 'mealType':
+        setMealType(value);
+        break;
+      case 'distance':
+        setDistance(value);
+        break;
+      case 'rating':
+        setRating(value);
+        break;
+      default:
+        break;
+    }
+    setIsModalVisible(false);
+  };
+
+  const SelectionOption = ({ label, value, selectedValue, options, pickerKey }) => (
     <View style={styles.selectionContainer}>
       <Text style={styles.selectionLabel}>{label}</Text>
-      <TouchableOpacity
-        style={styles.textBox}
-        onPress={() => togglePickerVisibility(pickerKey)}
-      >
+      <TouchableOpacity style={styles.textBox} onPress={() => openModal(pickerKey, options)}>
         <Text style={styles.textBoxText}>{selectedValue}</Text>
       </TouchableOpacity>
-      <Modal
-        visible={isPickerVisible[pickerKey]}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => togglePickerVisibility(pickerKey)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedValue}
-              onValueChange={(itemValue) => {
-                onChange(itemValue);
-                togglePickerVisibility(pickerKey);
-              }}
-              style={styles.picker}
-            >
-              {value.map((option) => (
-                <Picker.Item label={option.label} value={option.value} key={option.value} />
-              ))}
-            </Picker>
-            <TouchableOpacity
-              style={styles.closePickerButton}
-              onPress={() => togglePickerVisibility(pickerKey)}
-            >
-              <Text style={styles.closePickerText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 
@@ -67,73 +54,96 @@ const RecommendScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <Text style={styles.header}>Let's Set Your Preferences:</Text>
 
-        <PickerOption
+        <SelectionOption
           label="Dietary Preference"
-          value={[
+          value={diet}
+          selectedValue={diet}
+          options={[
             { label: "None", value: "None" },
             { label: "Vegan", value: "Vegan" },
             { label: "Vegetarian", value: "Vegetarian" },
             { label: "Pescatarian", value: "Pescatarian" },
             { label: "Keto", value: "Keto" },
           ]}
-          selectedValue={diet}
-          onChange={setDiet}
           pickerKey="diet"
         />
 
-        <PickerOption
+        <SelectionOption
           label="Service Type"
-          value={[
+          value={serviceType}
+          selectedValue={serviceType}
+          options={[
             { label: "Any", value: "Any" },
             { label: "Fast Food", value: "Fast Food" },
             { label: "Restaurant", value: "Restaurant" },
             { label: "Locally Owned", value: "Locally Owned" },
           ]}
-          selectedValue={serviceType}
-          onChange={setServiceType}
           pickerKey="serviceType"
         />
 
-        <PickerOption
+        <SelectionOption
           label="Meal Type"
-          value={[
+          value={mealType}
+          selectedValue={mealType}
+          options={[
             { label: "Any", value: "Any" },
             { label: "Breakfast", value: "Breakfast" },
             { label: "Lunch", value: "Lunch" },
             { label: "Dinner", value: "Dinner" },
             { label: "Snacks", value: "Snacks" },
           ]}
-          selectedValue={mealType}
-          onChange={setMealType}
           pickerKey="mealType"
         />
 
-        <PickerOption
+        <SelectionOption
           label="Distance"
-          value={[
+          value={distance}
+          selectedValue={distance}
+          options={[
             { label: "Any", value: "Any" },
             { label: "1 mile", value: "1 mile" },
             { label: "5 miles", value: "5 miles" },
             { label: "10 miles", value: "10 miles" },
           ]}
-          selectedValue={distance}
-          onChange={setDistance}
           pickerKey="distance"
         />
 
-        <PickerOption
+        <SelectionOption
           label="Rating"
-          value={[
+          value={rating}
+          selectedValue={rating}
+          options={[
             { label: "Any", value: "Any" },
             { label: "3+ Stars", value: "3" },
             { label: "4+ Stars", value: "4" },
             { label: "5 Stars Only", value: "5" },
           ]}
-          selectedValue={rating}
-          onChange={setRating}
           pickerKey="rating"
         />
       </ScrollView>
+
+      {/* Modal for options */}
+      <Modal visible={isModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.optionItem}
+                  onPress={() => handleSelection(item.value)}
+                >
+                  <Text style={styles.optionText}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.closeModalButton} onPress={() => setIsModalVisible(false)}>
+              <Text style={styles.closeModalText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -183,97 +193,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
-  pickerContainer: {
-    backgroundColor: '#fff',
-    marginHorizontal: 10,
-    borderRadius: 10,
-    padding: 15,
-  },
-  picker: {
-    height: 200,
-    marginBottom: 15,
-  },
-  closePickerButton: {
-    backgroundColor: '#ffaa00',
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  closePickerText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  recommendButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    backgroundColor: '#fff',
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  recommendButton: {
-    backgroundColor: '#ffaa00',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    width: '80%',
-    marginBottom: 20,
-  },
   modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  recommendationContainer: {
     backgroundColor: '#fff',
     marginHorizontal: 20,
     borderRadius: 10,
-    padding: 20,
-    justifyContent: 'center',
+    padding: 15,
+    maxHeight: '60%', 
   },
-  recommendationHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  recommendationList: {
-    maxHeight: 300,
-  },
-  recommendationItem: {
-    marginBottom: 15,
+  optionItem: {
+    paddingVertical: 15,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    paddingBottom: 10,
   },
-  recommendationText: {
+  optionText: {
     fontSize: 16,
     color: '#333',
   },
-  recommendationDetails: {
-    fontSize: 14,
-    color: '#888',
-  },
-  recommendationCloseButton: {
-    marginTop: 20,
+  closeModalButton: {
     backgroundColor: '#ffaa00',
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 6,
     alignItems: 'center',
+    marginTop: 15,
   },
-  recommendationCloseText: {
+  closeModalText: {
     color: '#fff',
-    fontSize: 18,
     fontWeight: 'bold',
+    fontSize: 16,
   },
 });
+
 
 export default RecommendScreen;
