@@ -14,6 +14,7 @@ const AccountScreen = ({ navigation }) => {
   const [userId, setUserId] = useState('');
   const [name, setName] = useState(''); 
   const [visitedPlaces, setVisitedPlaces] = useState([]);
+  const [favoritePlaces, setFavoritePlaces] = useState([]);
   const [newPlace, setNewPlace] = useState({ restaurants_id: '', restaurant_name: '', location: '' });  
   const [modalVisible, setModalVisible] = useState(false);
   const [showFullList, setShowFullList] = useState(false); 
@@ -21,16 +22,16 @@ const AccountScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const storedEmail = await AsyncStorage.getItem('email');
-        const storedName = await AsyncStorage.getItem('name');
-        const storedUserId = await AsyncStorage.getItem('user_id');
+        let storedEmail = JSON.parse(await AsyncStorage.getItem('email'));
+        let storedName = JSON.parse(await AsyncStorage.getItem('name'));
+        let storedUserId =  JSON.parse(await AsyncStorage.getItem('user_id'));
         setName(storedName || 'No name found');
         setEmail(storedEmail || 'No email found');
         setUserId(storedUserId || '');
   
         // Fetch visited places
         if (storedUserId) {
-          const response = await axios.get(`http://localhost:5001/visited-places/${storedUserId}`);
+          const response = await axios.get(`http://192.168.1.67:5001/visited-places/${storedUserId}`);
           setVisitedPlaces(response.data.restaurants || []);
         }
       } catch (error) {
@@ -48,12 +49,15 @@ const AccountScreen = ({ navigation }) => {
       ...newPlace,
       restaurants_id: randomId, // Add the random ID
     };
+    let storedUserId =  await AsyncStorage.getItem('user_id');
+    setUserId(storedUserId || '');
+    storedUserId = JSON.parse(storedUserId);
 
     try {
       const updatedPlaces = [...visitedPlaces, updatedPlace];
 
       // Update the backend with the new restaurant data
-      await axios.post(`http://localhost:5001/visited-places/${userId}`, {
+      await axios.post(`http://192.168.1.67:5001/visited-places/${storedUserId}`, {
         user_id: userId,
         restaurants: updatedPlaces,
       });
@@ -82,9 +86,30 @@ const AccountScreen = ({ navigation }) => {
 <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Favorite Places Section */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>Favorite Places</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.sectionHeader}>Favorite Places</Text>
+          </View>
           <View style={styles.contentContainer}>
-            <Text style={styles.noFavorites}>No favorite places added yet.</Text>
+            {favoritePlaces.length > 0 ? (
+              favoritePlaces.slice(0, showFullList ? favoritePlaces.length : maxVisible).map((place, index) => (
+                <View key={index} style={styles.listItemContainer}>
+                  <Text style={styles.contentNameText}>{place.restaurant_name}</Text>
+                  <Text style={styles.contentLocationText}>{place.location}</Text>
+                  {index < favoritePlaces.length - 1 && <View style={styles.divider} />}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noFavorites}>No favorite places yet.</Text>
+            )}
+
+            {/* Toggle Button */}
+            {favoritePlaces.length > maxVisible && (
+              <TouchableOpacity onPress={() => setShowFullList(!showFullList)}>
+                <Text style={styles.toggleText}>
+                  {showFullList ? 'Show Less' : 'Show More'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

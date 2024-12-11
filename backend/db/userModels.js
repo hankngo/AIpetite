@@ -26,6 +26,23 @@ const UserPreferencesSchema = new mongoose.Schema(
     }
 );
 
+const UserSavedPlacesSchema = new mongoose.Schema(
+    {
+        user_id: {type: mongoose.Schema.Types.ObjectId, ref: "UserInfo", require: true, unique:true},
+        restaurants: [
+            {
+                _id: false,
+                restaurants_id: {type: String, required: true, unique: true},
+                restaurant_name: {type: String, required: true},
+                location: {type: String, required: true, unique: true},
+            }
+        ]
+    },
+    {
+        collection: "UserSavedPlaces"
+    }
+);
+
 const UserVisitedPlacesSchema = new mongoose.Schema(
     {
         user_id: {type: mongoose.Schema.Types.ObjectId, ref: "UserInfo", require: true, unique:true},
@@ -34,7 +51,8 @@ const UserVisitedPlacesSchema = new mongoose.Schema(
                 _id: false,
                 restaurants_id: {type: String, required: true, unique: true},
                 restaurant_name: {type: String, required: true},
-                location: {type: String, required: true, unique: true}
+                location: {type: String, required: true, unique: true},
+                rating: {type: Number, required: true},
             }
         ]
     },
@@ -46,5 +64,6 @@ const UserVisitedPlacesSchema = new mongoose.Schema(
 const UserInfo = mongoose.model("UserInfo", UserSchema);
 const UserPreferences = mongoose.model("UserPreferences", UserPreferencesSchema);
 const UserVisitedHistory = mongoose.model("UserVisitedHistory", UserVisitedPlacesSchema);
+const UserSavedPlaces = mongoose.model("UserSavedPlaces", UserSavedPlacesSchema);
 
-module.exports = {UserInfo, UserPreferences, UserVisitedHistory};
+module.exports = {UserInfo, UserPreferences, UserVisitedHistory, UserSavedPlaces};

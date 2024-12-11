@@ -18,6 +18,7 @@ import AccountHeader from './src/components/AccountHeader';
 import SettingsScreen from './src/screens/SettingsScreen'; 
 import TermsScreen from './src/screens/TermsScreen'; 
 import RecommendScreen from './src/screens/RecommendScreen'; 
+import RestaurantDetails from './src/screens/RestarauntDetailsScreen';
 
 
 const Stack = createStackNavigator();
@@ -154,6 +155,24 @@ const App = () => {
               <Image
                 source={require('./assets/images/back_icon.png')}
                 style={{ width: 24, height: 24, tintColor: '#ffaa00' }} 
+              />
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="RestaurantDetails"
+          component={RestaurantDetails}
+          options={{
+            title: 'Restaurant Details',
+            headerBackTitle: 'Home',
+            headerBackTitleStyle: {
+              color: 'black',
+              fontWeight: 'bold',
+            },
+            headerBackImage: () => (
+              <Image
+                source={require('./assets/images/back_icon.png')}
+                style={{ width: 24, height: 24, tintColor: '#ffaa00' }}
               />
             ),
           }}
