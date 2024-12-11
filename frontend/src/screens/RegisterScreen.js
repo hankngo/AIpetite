@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity, ScrollView, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import axios from 'axios';
 
 const RegisterScreen = ({ navigation }) => {
   const [firstName, setFirstName] = useState(''); 
@@ -13,25 +14,35 @@ const RegisterScreen = ({ navigation }) => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+
     if (!isAgreed) {
-      alert('Please agree to the Terms and Conditions.');
-      return;
+        alert('Please agree to the Terms and Conditions.');
+        return;
     }
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match.');
-      return;
+        alert('Passwords do not match.');
+        return;
     }
+
     try {
-      const userData = {email, password};
-      const result = await axios.post("http://192.168.1.67:5001/register", userData); 
-      console.log(result);
-      alert('Registration successful!');
-      navigation.navigate('Recommend');
+        const userData = { name: firstName, email, password };
+        const result = await axios.post("http://localhost:5001/register", userData);
+
+        if (result.data.email && result.data.name) {
+            await AsyncStorage.setItem('email', result.data.email);
+            await AsyncStorage.setItem('name', result.data.name);
+            alert('Registration successful!');
+            navigation.replace('Login');
+        } else {
+            throw new Error("Invalid response data");
+        }
     } catch (error) {
-      console.error("Registration Error: ", error);
-      alert('Registration failed. Please try again.');
+        console.error("Registration Error: ", error);
+        alert('Registration failed. Please try again.');
     }
-  };
+};
+
 
   return (
     <KeyboardAvoidingView

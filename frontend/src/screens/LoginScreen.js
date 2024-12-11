@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity, ScrollView, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import { AuthContext } from '../context/AuthContext';
 
-
-const LoginScreen = ({ navigation, setIsAuthenticated }) => {
+const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { setIsAuthenticated } = useContext(AuthContext);
 
   const storeData = async (key, value) => {
     try {
@@ -23,11 +24,12 @@ const LoginScreen = ({ navigation, setIsAuthenticated }) => {
       console.log(result.data);
   
       // Store user_id, email, and token in AsyncStorage
-      await storeData('user_id', result.data.user_id); // Store user_id
-      await storeData('email', result.data.email);
-      await storeData('name', result.data.name);
-      await storeData('token', result.data.token);
+      await AsyncStorage.setItem('user_id', result.data.user_id); 
+      await AsyncStorage.setItem('email', result.data.email);
+      await AsyncStorage.setItem('name', result.data.name);
+      await AsyncStorage.setItem('token', result.data.token);
   
+      setIsAuthenticated(true);
       console.log("Stored user_id: ", result.data.user_id);
       console.log("Stored name: ", result.data.name);
       console.log("Login successful. Navigating to Home...");

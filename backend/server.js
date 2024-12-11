@@ -29,25 +29,33 @@ app.get("/", (req, res) => {
     res.send({status: "AIpetite started!"});
 });
 
-app.post("/register", async(req, res) => {
-    const {email, password, name} = req.body;
+app.post("/register", async (req, res) => {
+    const { email, password, name } = req.body;
     try {
-        const oldUser = await UserInfo.findOne({email: email});
+        const oldUser = await UserInfo.findOne({ email: email });
         if (oldUser) {
             return res.status(400).send("User already exists");
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser= await UserInfo.create({
+        const newUser = await UserInfo.create({
             email: email,
             password: hashedPassword,
             name: name,
         });
         await newUser.save();
-        return res.status(201).send("User registered successfully");
+
+        return res.status(201).json({
+            message: "User registered successfully",
+            email: newUser.email,
+            name: newUser.name,
+            user_id: newUser._id, 
+        });
     } catch (error) {
         return res.status(500).send("Error registering user: " + error.message);
     }
 });
+
 
 app.post("/login", async(req, res) => {
     const {email, password} = req.body;
