@@ -22,16 +22,16 @@ const AccountScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        let storedEmail = JSON.parse(await AsyncStorage.getItem('email'));
-        let storedName = JSON.parse(await AsyncStorage.getItem('name'));
-        let storedUserId =  JSON.parse(await AsyncStorage.getItem('user_id'));
+        let storedEmail = await AsyncStorage.getItem('email');
+        let storedName = await AsyncStorage.getItem('name');
+        let storedUserId =  await AsyncStorage.getItem('user_id');
         setName(storedName || 'No name found');
         setEmail(storedEmail || 'No email found');
         setUserId(storedUserId || '');
   
         // Fetch visited places
         if (storedUserId) {
-          const response = await axios.get(`http://192.168.1.67:5001/visited-places/${storedUserId}`);
+          const response = await axios.get(`http://172.20.10.2:5001/visited-places/${storedUserId}`);
           setVisitedPlaces(response.data.restaurants || []);
         }
       } catch (error) {
@@ -57,7 +57,7 @@ const AccountScreen = ({ navigation }) => {
       const updatedPlaces = [...visitedPlaces, updatedPlace];
 
       // Update the backend with the new restaurant data
-      await axios.post(`http://192.168.1.67:5001/visited-places/${storedUserId}`, {
+      await axios.post(`http://172.20.10.2:5001/visited-places/${storedUserId}`, {
         user_id: userId,
         restaurants: updatedPlaces,
       });

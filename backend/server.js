@@ -415,3 +415,41 @@ app.post("/save-restaurant", async (req, res) => {
     res.status(500).send("Error saving restaurant: " + error.message);
   }
 });
+
+app.post("/save-preferences", async (req, res) => {
+  const { userId, diet, serviceType, mealType, distance, rating } = req.body;
+
+  try {
+
+    const objectId  = userId.replace(/['"]+/g, ''); 
+    console.log(objectId)
+    // Check if the user preferences already exist
+    let userPreferences = await UserPreferences.findOne({ user_id: objectId });
+    if (userPreferences) {
+      // Update existing preferences
+      userPreferences.diet = diet;
+      userPreferences.serviceType = serviceType;
+      userPreferences.mealType = mealType;
+      userPreferences.distance = distance;
+      userPreferences.rating = rating;
+      await userPreferences.save();
+    } else {
+      // Create new preferences
+      console.log("Creating new!")
+      console.log(objectId)
+      await UserPreferences.create({
+        user_id: objectId,
+        diet: diet,
+        serviceType: serviceType,
+        mealType: mealType,
+        distance: distance,
+        rating: rating,
+      });
+    }
+
+    res.status(200).send("Preferences saved successfully");
+  } catch (error) {
+    console.error('Error saving preferences:', error);
+    res.status(500).send("Error saving preferences: " + error.message);
+  }
+});

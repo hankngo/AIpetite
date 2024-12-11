@@ -13,7 +13,7 @@
     "openai": "^4.73.1",
     "react-native-pager-view": "6.5.1",
     "react-native-paper": "^5.12.5",
-    "react-native-tab-view": "^4.0.1",
-    "redis": "^4.7.0"
+    "redis": "^4.7.0",
+    "react-native-tab-view": "^4.0.1"
   }
 }
