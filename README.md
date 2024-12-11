@@ -75,3 +75,37 @@
 - If possible, organize your work by keeping backend and frontend changes in separate branches.
 
 - When ready to merge, or if you encounter merge conflicts and need assistance, consult the team.
+
+## Testing
+
+1. **Check if Port 5001 is Running**
+
+Before running the tests, ensure that port 5001 is not in use by any other process.
+
+    To check if port 5001 is occupied, run the following command:
+
+```bash
+lsof -i :5001
+```
+
+If any processes are occupying port 5001, you'll see output indicating the process IDs. To kill these processes, run:
+
+```bash
+kill -9 <PID>
+```
+- Replace <PID> with the process ID(s) from the previous command.
+
+2. **Navigate to the Backend Directory**
+
+After ensuring port 5001 is available, navigate to the backend directory:
+
+```bash
+cd backend
+```
+3. **Run the Tests**
+
+Once you're in the backend directory, you can run the tests with:
+
+```bash
+npm test
+```
