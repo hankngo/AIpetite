@@ -18,7 +18,7 @@
     ```bash
     npm install
     ```
-
+3. **Make sure all IP adrress strings are changed to your IP address.""
 
 ## Run the backend first
 1. **Navigate to the backend directory**: 
