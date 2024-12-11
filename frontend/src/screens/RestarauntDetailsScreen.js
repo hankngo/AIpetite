@@ -19,7 +19,7 @@ const RestaurantDetailsScreen = ({ route }) => {
           console.log('Loaded restaurant details from cache');
         } else {
           // Fetch restaurant details from the backend
-          const response = await axios.get(`http://192.168.1.67:5001/restaurant/${restaurantId}`);
+          const response = await axios.get(`http://172.20.10.2:5001/restaurant/${restaurantId}`);
           setRestaurant(response.data);
           setLoading(false);
 
@@ -52,7 +52,7 @@ const RestaurantDetailsScreen = ({ route }) => {
 
     
 
-    const response = await axios.post('http://192.168.1.67:5001/save-restaurant', {
+    const response = await axios.post('http://172.20.10.2:5001/save-restaurant', {
       userId,
       restaurantId,
       name: restaurant.name,

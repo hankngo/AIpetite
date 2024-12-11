@@ -12,18 +12,18 @@ const UserSchema = new mongoose.Schema(
 
 const UserPreferencesSchema = new mongoose.Schema(
 	{
-		user_id: {type: mongoose.Schema.Types.ObjectId, ref: "UserInfo", require: true, unique:true},
-        cuisine: [String],
-        dietaryRestrictions: [String],
-        priceRange: {type: Number},
-        location: {
-            lat: { type: Number, required: true },
-            long: { type: Number, required: true },
-        },
-	},
-    {
-        collection: "UserPreferences"
-    }
+        user_id: { type: mongoose.Schema.Types.ObjectId, ref: "UserInfo", required: true, unique: true },
+        cuisine: { type: String, default: 'None' },
+        dietaryRestrictions: { type: String, default: 'None' },
+        diet: { type: String, default: 'None' },
+        serviceType: { type: String, default: 'Any' },
+        mealType: { type: String, default: 'Any' },
+        distance: { type: String, default: 'Any' },
+        rating: { type: String, default: 'Any' },
+      },
+      {
+        collection: "UserPreferences",
+      }
 );
 
 const UserSavedPlacesSchema = new mongoose.Schema(

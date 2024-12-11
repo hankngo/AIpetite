@@ -20,7 +20,7 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     try {
       const userData = { email, password };
-      const result = await axios.post("http://192.168.1.67:5001/login", userData);
+      const result = await axios.post("http://172.20.10.2:5001/login", userData);
       console.log(result.data);
   
       // Store user_id, email, and token in AsyncStorage

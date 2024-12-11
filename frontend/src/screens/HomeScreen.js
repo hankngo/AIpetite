@@ -32,8 +32,8 @@ const HomeScreen = ({ route, navigation }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const storedName = JSON.parse(await AsyncStorage.getItem('name')); 
-        const storedEmail = JSON.parse(await AsyncStorage.getItem('email')); 
+        const storedName = await AsyncStorage.getItem('name'); 
+        const storedEmail = await AsyncStorage.getItem('email'); 
         
         setName(storedName || 'No name found');
         setEmail(route.params?.email || storedEmail || 'No email found');
@@ -66,7 +66,7 @@ const HomeScreen = ({ route, navigation }) => {
         }
 
         // Fetch nearby restaurants from the backend
-        const response = await axios.post('http://192.168.1.67:5001/nearby-restaurants', { 
+        const response = await axios.post('http://172.20.10.2:5001/nearby-restaurants', { 
           latitude, 
           longitude, 
           foodType, 

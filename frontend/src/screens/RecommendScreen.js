@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const RecommendScreen = ({ navigation }) => {
   const [diet, setDiet] = useState('None');
@@ -38,6 +40,36 @@ const RecommendScreen = ({ navigation }) => {
         break;
     }
     setIsModalVisible(false);
+  };
+
+  const savePreferences = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('user_id');
+      if (!userId) {
+        Alert.alert('Error', 'User not logged in');
+        return;
+      }
+
+      const preferencesData = {
+        userId,
+        diet,
+        serviceType,
+        mealType,
+        distance,
+        rating,
+      };
+
+      console.log('Sending preferences data to backend:', preferencesData);
+
+      const response = await axios.post('http:/172.20.10.2:5001/save-preferences', preferencesData);
+
+      if (response.status === 200) {
+        Alert.alert('Success', 'Preferences saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      Alert.alert('Error', 'Failed to save preferences. Please try again.');
+    }
   };
 
   const SelectionOption = ({ label, value, selectedValue, options, pickerKey }) => (
@@ -120,26 +152,24 @@ const RecommendScreen = ({ navigation }) => {
           ]}
           pickerKey="rating"
         />
+
+        <TouchableOpacity style={styles.saveButton} onPress={savePreferences}>
+          <Text style={styles.saveButtonText}>Save Preferences</Text>
+        </TouchableOpacity>
       </ScrollView>
 
-      {/* Modal for options */}
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item.value}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={() => handleSelection(item.value)}
-                >
-                  <Text style={styles.optionText}>{item.label}</Text>
+          <View style={styles.pickerContainer}>
+            <ScrollView>
+              {options.map((option) => (
+                <TouchableOpacity key={option.value} onPress={() => handleSelection(option.value)}>
+                  <Text style={styles.optionText}>{option.label}</Text>
                 </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity style={styles.closeModalButton} onPress={() => setIsModalVisible(false)}>
-              <Text style={styles.closeModalText}>Close</Text>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -161,9 +191,8 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
     marginBottom: 20,
+    textAlign: 'center',
   },
   selectionContainer: {
     marginVertical: 10,
@@ -188,41 +217,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  saveButton: {
+    backgroundColor: '#ffaa00',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContainer: {
+  pickerContainer: {
     backgroundColor: '#fff',
     marginHorizontal: 20,
     borderRadius: 10,
-    padding: 15,
-    maxHeight: '60%', 
-  },
-  optionItem: {
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    padding: 20,
   },
   optionText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 18,
+    padding: 10,
+    textAlign: 'center',
   },
-  closeModalButton: {
+  closeButton: {
     backgroundColor: '#ffaa00',
-    paddingVertical: 10,
-    borderRadius: 6,
+    padding: 15,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: 20,
   },
-  closeModalText: {
+  closeButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });
-
 
 export default RecommendScreen;

@@ -1,19 +1,43 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Image, Alert } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MysteryPick = ({ navigation }) => {
   const [position, setPosition] = useState(new Animated.Value(0)); 
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState(null);
+  const [segments, setSegments] = useState([]);
 
-  const segments = [
-    { color: '#FFB84D', label: 'McDonalds' }, 
-    { color: '#FF8000', label: 'Taco Bell' },  
-    { color: '#FF9933', label: 'La Vics' }, 
-    { color: '#FFCC00', label: 'Chipotle' },   
-    { color: '#FFD700', label: 'Panda Express' },
-    { color: '#FFB300', label: 'In N Out' },   
-  ];
+  useEffect(() => {
+    const fetchNearbyRestaurants = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('user_id');
+        if (!userId) {
+          Alert.alert('Error', 'User not logged in');
+          return;
+        }
+
+        const response = await axios.post('http://172.20.10.2:5001/nearby-restaurants', {
+          userId,
+          latitude: 37.7749, // Replace with actual latitude
+          longitude: -122.4194, // Replace with actual longitude
+        });
+
+        const restaurants = response.data.map(restaurant => ({
+          color: '#FFB84D', // You can set different colors if needed
+          label: restaurant.name,
+        }));
+
+        setSegments(restaurants);
+      } catch (error) {
+        console.error('Error fetching nearby restaurants:', error);
+        Alert.alert('Error', 'Unable to fetch nearby restaurants. Please try again.');
+      }
+    };
+
+    fetchNearbyRestaurants();
+  }, []);
 
   const handleSpin = () => {
     setButtonDisabled(true);
@@ -62,7 +86,6 @@ const MysteryPick = ({ navigation }) => {
       >
         <Text style={styles.spinButtonText}>Spin Me!</Text>
       </TouchableOpacity>
-
     </View>
   );
 };
