@@ -26,11 +26,17 @@ const RegisterScreen = ({ navigation }) => {
     }
 
     try {
-      const userData = {email, password};
-      const result = await axios.post("http://192.168.1.67:5001/register", userData); 
-      console.log(result);
-      alert('Registration successful!');
-      navigation.navigate('Recommend');
+        const userData = { name: firstName, email, password };
+        const result = await axios.post("http://localhost:5001/register", userData);
+
+        if (result.data.email && result.data.name) {
+            await AsyncStorage.setItem('email', result.data.email);
+            await AsyncStorage.setItem('name', result.data.name);
+            alert('Registration successful!');
+            navigation.replace('Login');
+        } else {
+            throw new Error("Invalid response data");
+        }
     } catch (error) {
         console.error("Registration Error: ", error);
         alert('Registration failed. Please try again.');

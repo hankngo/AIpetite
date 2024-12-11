@@ -29,11 +29,13 @@ app.get("/", (req, res) => {
     res.send({status: "AIpetite started!"});
 });
 
+
 // Export the app for testing purposes
 module.exports = app;
 
 app.post("/register", async(req, res) => {
     const {email, password, name} = req.body;
+
     try {
         const oldUser = await UserInfo.findOne({ email: email });
         if (oldUser) {

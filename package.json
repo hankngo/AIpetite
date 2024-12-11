@@ -11,6 +11,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.0",
     "openai": "^4.73.1",
+    "react-native": "^0.76.5",
     "react-native-pager-view": "6.5.1",
     "react-native-paper": "^5.12.5",
     "redis": "^4.7.0",
