@@ -62,17 +62,13 @@ app.post("/register", async(req, res) => {
 
 app.post("/login", async(req, res) => {
     const {email, password} = req.body;
-    console.log("Request: ", email, password);
     try {
         const oldUser = await UserInfo.findOne({email: email});
-        console.log("db user: ", oldUser);
         if (!oldUser) {
             return res.status(400).send("User does not exist");
         }
 
-        const isMatch = await bcrypt.compare(password, oldUser.password)
-        console.log("compare:: ", isMatch)
-        if (isMatch) {
+        if (await bcrypt.compare(password, oldUser.password)) {
             const token = jwt.sign(
                 { user_id: oldUser._id, email: oldUser.email },
                 "RANDOM-TOKEN",
